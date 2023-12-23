@@ -10,5 +10,5 @@ int main() {
 		edx = rnd() % 8, edy = rnd() % 8;
 		if(stx!=edx || sty!=edy) break;
 	}
-	printf("%c%c %c%c %d %d %d %d %d %d", stx+'a', sty+'1', edx+'a', edy+'1', rnd()%20, rnd()%20, rnd()%20, rnd()%20, rnd()%20, rnd()%20);
+	printf("%c%c %c%c %d %d %d %d %d %d", stx+'a', sty+'1', edx+'a', edy+'1', rnd()%200, rnd()%200, rnd()%200, rnd()%200, rnd()%200, rnd()%200);
 }
