@@ -97,7 +97,7 @@ void solve() {
 	}
 	for(ll i = 1; i <= n; i++) {
 		for(ll j = 1; j <= m; j++) {
-			if(a[i][j] == '*') {
+			if(a[i][j] == '*' && !dfn[zip(i,j)]) {
 				tarjan(zip(i, j), 0);
 			}
 		}
