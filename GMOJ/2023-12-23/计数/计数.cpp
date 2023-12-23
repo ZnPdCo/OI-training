@@ -1,6 +1,6 @@
 /**
  * @file 计数.cpp 
- * @tag: #GMOJ #dp
+ * @tag: #GMOJ#dp
  * @author: ZnPdCo
  * @date: 2023-12-23 16:00:01
  * @problem: https://gmoj.net/senior/#main/show/4630

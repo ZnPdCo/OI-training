@@ -1,6 +1,6 @@
 /**
- * @file P4590 [TJOI2018] ��԰��.cpp 
- * @tag: #��� #dp��dp
+ * @file P4590 [TJOI2018] 游园会.cpp 
+ * @tag: #洛谷#dp套dp
  * @author: ZnPdCo
  * @date: 2023-12-23 13:55:50
  * @problem: https://www.luogu.com.cn/problem/P4590
@@ -15,13 +15,13 @@ using namespace std;
 ll n, k;
 char s[K];
 ll a[K];
-ll f[2][40000][3]; // f[i][s][j]��ʾƥ�䵽��iλ���ڲ�LCS�Զ���״̬Ϊs���ַ���������ַ����ֱ�Ϊotherwise}��N��NO�� 
-ll nxt[3][3]; // �ϼ�λ�� otherwise��N��NO����һλ�� N��O��I����ô��һλ�Ľ�β�� otherwise��N��NO ����һ���� 
+ll f[2][40000][3]; // f[i][s][j]表示匹配到第i位，内部LCS自动机状态为s，字符串的最后字符串分别为otherwise}、N、NO。 
+ll nxt[3][3]; // 上几位是 otherwise、N、NO，这一位是 N、O、I，那么这一位的结尾是 otherwise、N、NO 的哪一个？ 
 ll ans[K];
 
 
 
-ll cache1[K]; // ��ʱ����ֵ 
+ll cache1[K]; // 临时传入值 
 inline ll zip() {
 	ll res = 0;
 	for(ll i = 1; i <= k; i++) {
@@ -30,7 +30,7 @@ inline ll zip() {
 	return res;
 }
 
-ll cache2[K]; // ��ʱ����ֵ 
+ll cache2[K]; // 临时传出值 
 inline void unzip(ll a) {
 	cache2[0] = 0;
 	for(ll i = 1; i <= k; i++) {
@@ -41,12 +41,12 @@ inline void unzip(ll a) {
 
 
 int main() {
-	// ������� 
+	// 处理情况 
 	nxt[0][0] = 1;
 	nxt[0][1] = 0;
 	nxt[0][2] = 0;
 	nxt[1][0] = 1;
-	nxt[1][1] = 2; // �ϼ�λ�� N����һλ�� N����ô��һλ�Ľ�β�� N���ϡ���ͬ��
+	nxt[1][1] = 2; // 上几位是 N，这一位是 N，那么这一位的结尾是 N。上、下同。
 	nxt[1][2] = 0;
 	nxt[2][0] = 1;
 	nxt[2][1] = 0;
@@ -63,17 +63,17 @@ int main() {
 	f[0][0][0] = 1;
 	for(ll i = 1; i <= n; i++) {
 		memset(f[i%2], 0, sizeof(f[i%2]));
-		for(ll s = 0; s < (1<<k); s++) { // $i-1$ �� LCS �Զ���״̬ 
+		for(ll s = 0; s < (1<<k); s++) { // $i-1$ 的 LCS 自动机状态 
 			unzip(s);
-			for(ll j = 0; j <= 2; j++) { // $i-1$ �Ľ�β�� otherwise��N��NO�� 
-				if(!f[(i-1)%2][s][j]) continue; // ���� 
-				for(ll c = 0; c <= 2; c++) { // ö�ٵ� $i$ λ��ĸ N��O��I�� 
-					if(j == 2 && c == 2) continue;		// NO ��β���ܼ��� I
-					// �պ���Ϊ cache �ķ��࣬���� cache1 �� i ��ֵ��cache2 �� i-1 ��ֵ�� 
-					// cache1[x] �൱�� dp[i][x] 
-					// cache2[x] �൱�� dp[i-1][x]
-					// cache1[x-1]` �൱�� dp[i][x-1]
-					// cache2[x-1]` �൱�� dp[i-1][x-1]
+			for(ll j = 0; j <= 2; j++) { // $i-1$ 的结尾是 otherwise、N、NO。 
+				if(!f[(i-1)%2][s][j]) continue; // 卡常 
+				for(ll c = 0; c <= 2; c++) { // 枚举第 $i$ 位字母 N、O、I。 
+					if(j == 2 && c == 2) continue;		// NO 结尾不能加上 I
+					// 刚好因为 cache 的分类，定义 cache1 是 i 的值，cache2 是 i-1 的值。 
+					// cache1[x] 相当于 dp[i][x] 
+					// cache2[x] 相当于 dp[i-1][x]
+					// cache1[x-1]` 相当于 dp[i][x-1]
+					// cache2[x-1]` 相当于 dp[i-1][x-1]
 					for(ll x = 1; x <= k; x++) {
 						cache1[x] = max(max(cache2[x], cache1[x-1]), cache2[x-1] + (c == a[x]));
 					}

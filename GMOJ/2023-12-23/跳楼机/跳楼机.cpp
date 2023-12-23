@@ -1,6 +1,6 @@
 /**
  * @file 跳楼机.cpp 
- * @tag: #GMOJ #同余最短路
+ * @tag: #GMOJ#同余最短路
  * @author: ZnPdCo
  * @date: 2023-12-23 16:03:06
  * @problem: https://gmoj.net/senior/#main/show/4722

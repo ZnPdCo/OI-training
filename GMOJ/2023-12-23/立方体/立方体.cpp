@@ -1,6 +1,6 @@
 /**
  * @file 立方体.cpp 
- * @tag: #GMOJ #大模拟 #最短路
+ * @tag: #GMOJ#大模拟#最短路
  * @author: ZnPdCo
  * @date: 2023-12-23 16:02:14
  * @problem: https://gmoj.net/senior/#main/show/4628

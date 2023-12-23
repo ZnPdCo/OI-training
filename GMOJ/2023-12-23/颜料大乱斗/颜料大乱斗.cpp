@@ -1,6 +1,6 @@
 /**
  * @file 颜料大乱斗.cpp 
- * @tag: #GMOJ #线段树
+ * @tag: #GMOJ#线段树
  * @author: ZnPdCo
  * @date: 2023-12-23 16:03:45
  * @problem: https://gmoj.net/senior/#main/show/4603
