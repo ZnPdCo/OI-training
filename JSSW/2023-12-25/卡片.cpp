@@ -1,6 +1,6 @@
 /**
- * @file ��Ƭ.cpp 
- * @tag: #JSSW#���� 
+ * @file 卡片.cpp 
+ * @tag: #JSSW#数论 
  * @author: ZnPdCo
  * @date: 2023-12-25 13:21:53
  * @problem: https://jsswoj.com/oj/#main/show/2972
@@ -18,11 +18,11 @@ ll a, m, b, n;
 int main() {
 	scanf("%lld %lld %lld %lld", &a, &m, &b, &n);
 	/*
-	 lcm(a,bn)����غ�Ҫ�ߵ�·�� 
-	 Aliceһ����a������Ϊ lcm(a, b*n) / a
-	 ��Ϊ��ת�ǵ�����һ��������ת�ǵ��·���� lcm(a, b)
-	 Ȼ�������ܹ����ٴ�ת�ǵ�  lcm(a, b*n) / lcm(a, b)
-	 ����ת�ǵ�λ��������Ϊ0��a-1���������һ�飿��֪���Բ��� 
+	 lcm(a,bn)算出重合要走的路程 
+	 Alice一次走a长，故为 lcm(a, b*n) / a
+	 因为在转角点会多走一步，遇到转角点的路程是 lcm(a, b)
+	 然后计算出总共多少次转角点  lcm(a, b*n) / lcm(a, b)
+	 对于转角点位置余数不为0的情况都算一遍？不知道对不对 
 	 */ 
-	printf("%lld", lcm(a, b*n) / a + (a-1) * lcm(a, b*n) / lcm(a, b));
+	printf("%lld", lcm(a, b*n) / a + (lcm(a, b)/b-1) * lcm(a, b*n) / lcm(a, b));
 }
