@@ -23,6 +23,7 @@ int main() {
 	 因为在转角点会多走一步，遇到转角点的路程是 lcm(a, b)
 	 然后计算出总共多少次转角点  lcm(a, b*n) / lcm(a, b)
 	 对于转角点位置余数不为0的情况都算一遍？不知道对不对 
+	 注意乘的顺序 
 	 */ 
-	printf("%lld", lcm(a, b*n) / a + (lcm(a, b)/b-1) * lcm(a, b*n) / lcm(a, b));
+	printf("%lld", lcm(a, b*n) / a + lcm(a, b*n) / lcm(a, b) * (lcm(a, b)/b-1));
 }
