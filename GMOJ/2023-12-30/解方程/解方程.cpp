@@ -1,5 +1,5 @@
 /**
- * @file 联合权值.cpp 
+ * @file 解方程.cpp 
  * @tag: #GMOJ#玄学
  * @author: ZnPdCo
  * @date: 2023-12-30 14:27:22
