@@ -62,7 +62,7 @@ int main() {
 			if(head < tail && q[head] < i-t/2) head++;
 			if(head < tail && k[i] >= k[q[tail]]) tail--;
 			q[++tail] = i;
-			far[(i-1)%t+1] = i+k[q[head]];
+			far[(i-1)%t+1] = max(far[(i-1)%t+1], k[q[head]]+i);
 		}
 		
 		/*
@@ -77,7 +77,7 @@ int main() {
 			if(head < tail && q[head] > i+t/2) head++;
 			if(head < tail && k[i] >= k[q[tail]]) tail--;
 			q[++tail] = i;
-			far[(i-1)%t+1] = max(far[i], k[q[head]]-i);
+			far[(i-1)%t+1] = max(far[(i-1)%t+1], k[q[head]]-i);
 		}
 		for(ll i = 1; i <= t; i++) {
 			printf("%lld ", far[i]);
