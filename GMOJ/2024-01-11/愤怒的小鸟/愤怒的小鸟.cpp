@@ -1,3 +1,10 @@
+/**
+ * @file 愤怒的小鸟.cpp 
+ * @tag: #GMOJ#dp#状压dp#数学
+ * @author: ZnPdCo
+ * @date: 2024-01-11 20:57:17
+ * @problem: https://gmoj.net/senior/#main/show/4908
+ **/
 #include <cstdio>
 #include <cmath>
 #include <algorithm>

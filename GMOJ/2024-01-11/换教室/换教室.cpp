@@ -1,3 +1,10 @@
+/**
+ * @file 换教室.cpp 
+ * @tag: #GMOJ#dp
+ * @author: ZnPdCo
+ * @date: 2024-01-11 20:57:17
+ * @problem: https://gmoj.net/senior/#main/show/4905
+ **/
 #include <cstdio>
 #include <algorithm>
 using namespace std;
