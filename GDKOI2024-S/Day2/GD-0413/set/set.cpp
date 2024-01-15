@@ -1,32 +1,80 @@
 #include <cstdio>
 #include <cstdlib>
-#define ll long long
-ll n;
-ll a[100][100];
-ll step[100], cnt;
+#include <set>
+#define N 3000
+using namespace std;
+int n, siz;
+bool a[N][N], v[N][N];
+int tot;
+inline int calc(int x) {
+	return (x % siz + siz) % siz;
+}
+inline int read() {
+	int x = 0;
+	char c = '.';
+	while(c < '0' || c > '9') c = getchar();
+	while(c >= '0' && c <= '9') {
+		x = (x << 1) + (x << 3) + (c ^ '0');
+		c = getchar();
+	}
+	return x;
+}
+void print(int x) {
+	if(x > 9) print(x / 10);
+	putchar(x % 10 + '0');
+}
 int main() {
-//	freopen("set.in", "r", stdin);
-//	freopen("set.out", "w", stdout);
-	scanf("%lld", &n);
-	n = 1<<n;
-	for(ll i = 1; i <= n; i++) {
-		for(ll j = 1; j <= n; j++) {
-			scanf("%lld", &a[i][j]);
+	freopen("set.in", "r", stdin);
+	freopen("set.out", "w", stdout);
+	n = read();
+	siz = 1<<n;
+	for(int i = 0; i < siz; i++) {
+		for(int j = 0; j < siz; j++) {
+			a[i][j] = read();
 		}
-	} 
-	while(true) {
-		for(ll i = 1; i <= n; i++) {
-			for(ll j = 1; j <= n; j++) {
+	}
+	
+	for(int w = siz/2; w >= 2; w /= 2) {
+		for(int i = 0; i < siz; i++) {
+			for(int j = 0; j < siz; j++) {
+				v[i][j] = 0;
+			}
+		}
+		for(int i = 0; i < siz; i++) {
+			for(int j = 0; j < siz; j++) {
 				if(a[i][j]) {
-					a[i][j] = ~a[i][j];
-					a[i==1?n:i-1][j] = ~a[i==1?n:i-1][j];
-					a[i==n?1:i+1][j] = ~a[i==n?1:i+1][j];
-					a[i][j==1?n:j-1] = ~a[i][j==1?n:j-1];
-					a[i][j==n?1:j+1] = ~a[i][j==n?1:j+1];
-					printf("%lld %lld\n", i-1, j-1);
+					v[i][j] ^= 1;
+					v[calc(i+w/2)][j] ^= 1;
+					v[calc(i-w/2)][j] ^= 1;
+					v[i][calc(j+w/2)] ^= 1;
+					v[i][calc(j-w/2)] ^= 1;
 				}
 			}
-		} 
+		}
+		for(int i = 0; i < siz; i++) {
+			for(int j = 0; j < siz; j++) {
+				a[i][j] = v[i][j];
+			}
+		}
 	}
-	printf("-1");
+	
+	for(int i = 0; i < siz; i++) {
+		for(int j = 0; j < siz; j++) {
+			if(v[i][j]) {
+				tot++;
+			}
+		}
+	}
+	print(tot);
+	putchar('\n');
+	for(int i = 0; i < siz; i++) {
+		for(int j = 0; j < siz; j++) {
+			if(v[i][j]) {
+				print(i);
+				putchar(' ');
+				print(j);
+				putchar('\n');
+			}
+		}
+	}
 }

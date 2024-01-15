@@ -1,9 +1,9 @@
 /**
- * @file A.cpp 
+ * @file F.cpp 
  * @tag: #AtCoder#ABC#ABC336
  * @author: ZnPdCo
  * @date: 2023-12-23 13:55:50
- * @problem: https://atcoder.jp/contests/abc336/tasks/abc336_a
+ * @problem: https://atcoder.jp/contests/abc336/tasks/abc336_f
  **/
 #include<bits/stdc++.h>
 #define ll long long
@@ -11,6 +11,7 @@
 #define M 
 #define P 998244353
 using namespace std;
+void print() {}
 template<typename T, typename... Ts>
 void print(const T& x, const Ts&... y) {
 	cout << x << ' ';
