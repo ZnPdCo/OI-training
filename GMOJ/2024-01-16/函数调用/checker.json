@@ -1,0 +1,22 @@
+{
+    "script": {
+        "code": "函数调用", 
+        "ans": "poly",
+        "gen": "data"
+    },
+    "fileio": {
+        "name": "call",
+        "freopen": true
+    },
+    "compile": {
+        "c": "",
+        "cpp": "g++ ${infile} -o ${outfile} -O2 -static"
+    },
+    "run": {
+        "python": "python ${file}"
+    },
+    "limit": {
+        "code": 1,
+        "gen": 2
+    }
+}
