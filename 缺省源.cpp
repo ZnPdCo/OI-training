@@ -11,6 +11,7 @@
 #define M 
 #define P 998244353
 using namespace std;
+void print() {}
 template<typename T, typename... Ts>
 void print(const T& x, const Ts&... y) {
 	cout << x << ' ';
