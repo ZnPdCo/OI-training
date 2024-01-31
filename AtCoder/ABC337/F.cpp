@@ -6,6 +6,7 @@
  * @problem: https://atcoder.jp/contests/abc336/tasks/abc336_a
  **/
 #include<bits/stdc++.h>
+#include<vector>
 #define ll long long
 #define N 400010
 using namespace std;
@@ -21,40 +22,43 @@ void input(T& x, Ts&... y) {
 	cin >> x;
 	input(y...);
 }
-ll n, m, k, Case=1;
+ll n, m, k;
 ll a[N];
-ll num[N];
 ll type, ans;
 ll cnt[N];
-void solve();
+vector<ll> num[N];
+ll top[N];
 int main() {
-	while(Case--) solve();
-}
-void solve() {
 	input(n, m, k);
+	for(ll i = 1; i <= n; i++) {
+		num[i].push_back(k);
+	}
 	for(ll i = 1; i <= n; i++) {
 		input(a[i]);
 		a[i+n] = a[i];
-		num[a[i]] = min(num[a[i]] + 1, k);
+		if(num[a[i]].back() == k) num[a[i]].push_back(1);
+		else {
+			ll x = num[a[i]].back();
+			num[a[i]].pop_back();
+			num[a[i]].push_back(x+1);
+		}
 	}
 	ll r = 1;
 	for(ll l = 1; l <= n; l++) {
-		bool flag = false;
 		while(r < 2*n) {
-			flag = true;
-			if(cnt[a[r]] == 0) {
+			if(cnt[a[r]] % k == 0) {
 				type++;
-				ans += num[a[r]];
+				ans += num[a[r]][++top[a[r]]];
 			}
 			cnt[a[r]]++;
 			if(type > m) break;
 			r++;
 		}
-		if(flag && r < 2*n) {
+		if(r < 2*n) {
 			cnt[a[r]]--;
-			if(cnt[a[r]] == 0) {
+			if(cnt[a[r]] % k == 0) {
 				type--;
-				ans -= num[a[r]];
+				ans -= num[a[r]][top[a[r]]--];
 			}
 		}
 		
@@ -65,9 +69,9 @@ void solve() {
 		
 		
 		cnt[a[l]]--;
-		if(cnt[a[l]] == 0) {
+		if(cnt[a[l]] % k == 0) {
 			type--;
-			ans -= num[a[l]];
+			ans -= num[a[l]][top[a[l]]--];
 		}
 	}
 }
