@@ -1,0 +1,170 @@
+\documentclass[serif]{beamer}
+\usepackage{xeCJK}
+\usepackage{ctex}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{amsthm,amsmath,amssymb}
+\usepackage{mathrsfs}
+\usepackage{latexsym}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usefonttheme{professionalfonts}%把所有的字体间距变正常，和article一样
+\usetheme{Berlin}
+\usecolortheme{whale}
+\useinnertheme[shadow=true]{rounded}
+\usefonttheme[onlymath]{serif}
+
+\title{数位DP}
+\author{\href{https://www.cnblogs.com/znpdco}{ZnPdCo}}
+\date{2024年2月}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}[<+-| alert@+>]
+    \item 简单来说,
+    \item 就是要求统计区间[L,R]内
+    \item 满足条件的数的个数
+    \item 或者能够想到打表部分分做法的
+  \end{itemize}
+\end{frame}
+
+\section{手机号码}
+
+\begin{frame}
+  \begin{itemize}
+    \item 求是 $11$ 位数，且不含前导的 $0$，$[L,R]$ 区间内所有满足号码中要出现至少 $3$ 个相邻的相同数字，且号码中不能同时出现 $8$ 和 $4$ 的数的个数。
+    \item $10^{10}\le L\le R\le 10^{11}$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}[<+-| alert@+>]
+    \item $s[l,r]=s[0,r]-s[0,l-1]$。
+    \item 从高位到低位 dp，$i=1$ 表示最高位。
+    \item 设 $f[i][j][k][0/1][0/1][0/1][num]$ 表示到第 $i$ 位，上一位是 $j$，这一位是 $k$，是否有连续 $3$ 位的相同的数，是否有 $8/4$，这个数是 $num$（用于检查越界）。
+    \item 初始化……
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}[<+-| alert@+>]
+    \item 发现储存 $num$ 不现实。
+    \item $n=5141$ 中如果 $num=51$（也就是 $num$ 等于 $n$ 的前缀）那么下一位只能填 $[0,4]$，如果 $num$ 小于 $n$ 的前缀，那么下一位可以随便填。
+    \item 设 $f[i][j][k][0/1][0/1][0/1][f=0/1]$ 中的 $f=1$ 表示前面等于 $n$ 的前缀，$f=0$ 表示小于 $n$ 的前缀。
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}[<+-| alert@+>]
+    \item 枚举第 $i$ 位为 $j$，从高到低第 $i$ 位为 $s_i$。
+    \item $f[i][f=0]\gets f[i-1][f=0] \qquad {\rm anywise}$
+    \item $f[i][f=0]\gets f[i-1][f=1] \qquad {j<s_i}$
+    \item $f[i][f=1]\gets f[i-1][f=1] \qquad {j=s_i}$
+  \end{itemize}
+\end{frame}
+
+\section{里程计}
+\begin{frame}
+  \begin{itemize}
+    \item 找出 $[l,r]$ 的区间里有多少个数满足：有一个数在每一位上出现的次数超过了位数的一半。
+    \item $100\le L\le R\le 10^{18}$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}[<+-| alert@+>]
+    \item 枚举超过位数一半的数，分开处理，这样我们的问题就变简单了，每次只需要记录一个数的出现次数就完了。
+    \item 完了吗？？当然没有。比如 $1122$，我们算 $1$ 的时候会算一次，算 $2$ 又要算一次。
+    \item 经过总结，发现如果一个数被算了两次，那么这样子的数满足位数是偶数且只由两个数字构成，所以我们在最后再来一次数位 DP，找到满足这个条件的数，减去就完事了。
+  \end{itemize}
+\end{frame}
+
+\section{淘金}
+\begin{frame}
+  \begin{itemize}
+    \item 有一个 $X$、$Y$ 轴坐标范围为 $1\sim n$ 的范围的方阵，每个点上有块黄金。一阵风来 $(x,y)$ 上的黄金到了 $(g(x),g(y))$，$g(x)$ 为 $x$ 各位上数字的乘积，如果黄金飘出方阵就没了。求在 $k$ 个格子上采集黄金最多可以采集的黄金数。
+    \item $1\le n\le 10^{12}$
+    \item $k\le \min(n^2,10^5)$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}[<+-| alert@+>]
+    \item 发现 $g$ 的个数不会太多，大概在 $10^5$ 左右。
+    \item 所以用 $f[i][j]$ 表示枚举到第 $i$ 位，数位乘积为 $j$（离散化后）的数的个数。
+    \item 比如 $g(0001)$，数位乘积为 $0$，实际上结果为 $1$。
+    \item 如何解决？
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}[<+-| alert@+>]
+    \item 一是从低到高位枚举 dp，思路大致一样。
+    \item 二是记录当前是否是前导零。
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}[<+-| alert@+>]
+    \item 贪心选择，大根堆……
+  \end{itemize}
+\end{frame}
+
+\section{数数}
+\begin{frame}
+  \begin{itemize}
+    \item 称一个正整数 $x$ 是幸运数，当且仅当它的十进制表示中不包含数字串集合 $s$ 中任意一个元素作为其子串。例如当 $s = \{22, 333, 0233\}$ 时，$233$ 是幸运数，$2333$、$20233$、$3223$ 不是幸运数。给定 $n$ 和 $s$，计算不大于 $n$ 的幸运数个数。
+    \item $n$ 没有前导 $0$，但是 $s_i$ 可能有前导 $0$。
+    \item $1 \leq n < 10^{1201}$
+    \item $1 \leq m \leq 100$
+    \item $1 \leq \sum_{i = 1}^m |s_i| \leq 1500$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}[<+-| alert@+>]
+    \item 多模式串匹配？
+    \item AC 自动机？
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}[<+-| alert@+>]
+    \item 建好自动机后用 $f[i][j]$ 表示第 $i$ 个数位，到第 $j$ 个节点。
+    \item 好了吗？当然没有。比如说 $s={012}$，那么 $12$ 本质上是没有问题的，但是实际上我们会枚举为 $012$，匹配了。
+    \item 记录一个 $0/1$ 记录当前是否是前导零。如果是则不更新 $j$。
+  \end{itemize}
+\end{frame}
+
+\section{技巧、题目、练习……}
+\begin{frame}
+  \begin{itemize}
+    \item 求不含前导的 $0$，$[L,R]$ 区间内所有满足号码中要出现至少 $3$ 个相邻的相同数字，且号码中不能同时出现 $8$ 和 $4$ 的数的个数。
+    \item $100\le L\le R\le 10^{44}$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}[<+-| alert@+>]
+    \item 高精度不好写，可以这么写：
+    \item $s[l,r]=s[0,r]-s[0,l]+check(l)$。
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}
+    \item 思考：
+    \item 给定 $n,m,k$，求 $(\sum_{i=1}^n\sum_{j=1}^n\varphi(i\oplus j\oplus k)+\mu(i\oplus j\oplus k)+d(i\oplus j\oplus k))\bmod 998,244,353$。
+    \item $1\le n,m,k\le 10^{10}$
+  \end{itemize}
+\end{frame}
+
+\end{document}
