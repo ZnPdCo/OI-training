@@ -7,8 +7,7 @@
  **/
 #include<bits/stdc++.h>
 #define ll long long
-#define N 1010 10010 100010 1000010
-#define M 
+#define N 200010
 #define P 998244353
 using namespace std;
 void print() {}
@@ -24,20 +23,20 @@ void input(T& x, Ts&... y) {
 	input(y...);
 }
 ll n, m, Case=1;
-ll a[N][M];
-char s[N];
+ll a[N], s[N], f[N], r[N];
 void solve();
 int main() {
-	input(Case);
 	while(Case--) solve();
 }
 void solve() {
-	input(n, m);
+	input(n);
 	for(ll i = 1; i <= n; i++) {
 		input(a[i]);
-		for(ll j = 1; j <= m; j++) {
-			input(a[i][j]);
-		}
+		s[i] = s[i-1] + a[i];
+	}
+	for(ll i = n; i >= 1; i--) {
+		f[i] = a[i];
+		r[i] = i
 	}
 	print();
 }
