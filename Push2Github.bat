@@ -30,6 +30,8 @@ for /f "delims=" %%i in (%data%) do set "content=%%i"
 if exist "%vbs%" del /s /q /f "%data%">nul
 if exist "%vbs%" del /s /q /f "%vbs%">nul
 
+if %content%=="" (exit)
+
 set msg=%date% %time%: %content%
 git add .
 git commit -m "%msg%"
