@@ -34,5 +34,4 @@ set msg=%date% %time%: %content%
 git add .
 git commit -m "%msg%"
 git push
-pause>nul
 exit
