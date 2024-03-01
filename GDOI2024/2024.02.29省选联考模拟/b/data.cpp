@@ -8,7 +8,7 @@ int main() {
 	timeb tb;
 	ftime(&tb);
 	mt19937 rnd(tb.millitm);
-	ll n = 10, m = 3;
+	ll n = 100, m = 5;
 	printf("%lld %lld\n", m, n);
 	for(ll i = 1; i <= m; i++) {
 		ll l = rnd() % n + 1;

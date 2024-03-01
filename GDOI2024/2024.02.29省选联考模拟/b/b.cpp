@@ -7,14 +7,13 @@ ll m, n, rt;
 ll a[N];
 
 struct node {
-	ll siz, x, y, lx, ly;
+	ll siz, x, y;
 	ll lson, rson;
 } t[4*N];
 ll cnt = 0;
 
-inline ll clac(ll a, ll x, ll y) {
-	if(a < y) return 0;
-	return (a - y) / x + 1;
+inline ll calc(ll a, ll x, ll y) {
+	return (a - y + x - 1) / x;
 }
 
 void pushdown(ll l, ll r, ll pos) {
@@ -23,53 +22,62 @@ void pushdown(ll l, ll r, ll pos) {
 	if(!ls(pos)) {
 		ls(pos) = ++cnt;
 		t[ls(pos)].siz = mid - l + 1;
-		t[ls(pos)].x = t[ls(pos)].lx = 1;
+		t[ls(pos)].x = 1;
 	}
 	if(!rs(pos)) {
 		rs(pos) = ++cnt;
 		t[rs(pos)].siz = r - mid;
-		t[rs(pos)].x = t[rs(pos)].lx = 1;
+		t[rs(pos)].x = 1;
+	}
+	ll oldlsum = ls(pos) ? t[ls(pos)].siz : (mid - l + 1);	// 左边操作之前的值，右边的y要减去这个值
+	
+	ll x = t[pos].x, y = t[pos].y;
+	if(t[ls(pos)].siz == 0);
+	else if(t[ls(pos)].siz == 1 && y == 0);
+	else {
+		t[ls(pos)].y = (y * t[ls(pos)].x + t[ls(pos)].y) % (t[ls(pos)].x * x);
+		t[ls(pos)].x *= x;
+		t[ls(pos)].siz = calc(t[ls(pos)].siz, x, y);
 	}
 	
-	ll x = t[pos].lx, y = t[pos].ly;
-	t[ls(pos)].y = (y * t[ls(pos)].x + t[ls(pos)].y) % (t[ls(pos)].x * x);
-	t[ls(pos)].x *= x;
-	t[pos].siz = clac(mid, t[ls(pos)].x, t[ls(pos)].y) - clac(l - 1, t[ls(pos)].x, t[ls(pos)].y);
+	y = ((y - oldlsum) % x + x) % x;
+	if(t[rs(pos)].siz == 0);
+	else if(t[rs(pos)].siz == 1 && y == 0);
+	else {
+		t[rs(pos)].y = (y * t[rs(pos)].x + t[rs(pos)].y) % (t[rs(pos)].x * x);
+		t[rs(pos)].x *= x;
+		t[rs(pos)].siz = calc(t[rs(pos)].siz, x, y);
+	}
 	
-	t[rs(pos)].y = (y * t[rs(pos)].x + t[rs(pos)].y) % (t[rs(pos)].x * x);
-	t[rs(pos)].x *= x;
-	t[pos].siz = clac(r, t[rs(pos)].x, t[rs(pos)].y) - clac(mid, t[rs(pos)].x, t[rs(pos)].y);
-	
-	
-	t[ls(pos)].lx = t[rs(pos)].lx = t[pos].lx;
-	t[ls(pos)].ly = t[rs(pos)].ly = t[pos].ly;
-	t[pos].lx = 1;
-	t[pos].ly = 0;
+	t[pos].x = 1;
+	t[pos].y = 0;
 }
 
 void update(ll nl, ll nr, ll l, ll r, ll &pos, ll x, ll y) {
 	if(!pos) {
 		pos = ++cnt;
 		t[pos].siz = r - l + 1;
-		t[pos].x = t[pos].lx = 1;
+		t[pos].x = 1;
 	}
 	if(nl <= l && r <= nr) {
-		t[pos].ly = (y * t[pos].lx + t[pos].ly) % (t[pos].lx * x);
-		t[pos].lx *= x;
-		
-		t[pos].y = (y * t[pos].x + t[pos].y) % (t[pos].x * x);
-		t[pos].x *= x;
-		
-		t[pos].siz = clac(r, t[pos].x, t[pos].y) - clac(l - 1, t[pos].x, t[pos].y);
+		if(t[pos].siz == 0);
+		else if(t[pos].siz == 1 && y == 0);
+		else {
+			t[pos].y = (y * t[pos].x + t[pos].y) % (t[pos].x * x);
+			t[pos].x *= x;
+			t[pos].siz = calc(t[pos].siz, x, y);
+		}
 		return;
 	}
-	if(t[pos].lx != 1) pushdown(l, r, pos);
+	if(t[pos].x != 1) pushdown(l, r, pos);
 	ll mid = (l + r) >> 1;
+	
+	ll oldlsum = ls(pos) ? t[ls(pos)].siz : (mid - l + 1);	// 左边操作之前的值，右边的y要减去这个值
 	
 	if(nl <= mid)
 		update(nl, nr, l, mid, ls(pos), x, y);
 	if(mid < nr)
-		update(nl, nr, mid+1, r, rs(pos), x, y);
+		update(nl, nr, mid+1, r, rs(pos), x, ((y - oldlsum) % x + x) % x);
 	
 	ll lsum = ls(pos) ? t[ls(pos)].siz : (mid - l + 1);
 	ll rsum = rs(pos) ? t[rs(pos)].siz : (r - mid);
@@ -79,12 +87,12 @@ ll query(ll x, ll l, ll r, ll &pos) {
 	if(!pos) {
 		pos = ++cnt;
 		t[pos].siz = r - l + 1;
-		t[pos].x = t[pos].lx = 1;
+		t[pos].x = 1;
 	}
 	if(l == r) {
 		return l;
 	}
-	if(t[pos].lx != 1) pushdown(l, r, pos);
+	if(t[pos].x != 1) pushdown(l, r, pos);
 	ll mid = (l + r) >> 1;
 	ll lsum = ls(pos) ? t[ls(pos)].siz : (mid - l + 1);
 	if(x <= lsum)
@@ -94,10 +102,8 @@ ll query(ll x, ll l, ll r, ll &pos) {
 }
 
 int main() {
-//	freopen("ex_flower4.in", "r", stdin);
-//	freopen("ex_flower4.out", "w", stdout);
-//	freopen("b.in", "r", stdin);
-//	freopen("b.out", "w", stdout);
+	freopen("b.in", "r", stdin);
+	freopen("b.out", "w", stdout);
 	scanf("%lld %lld", &m, &n);
 	for(ll i = 1; i <= m; i++) {
 		ll l, r;
@@ -107,4 +113,5 @@ int main() {
 		printf("%lld %lld\n", L, R);
 		update(L, R, 1, n, rt, 2, l % 2);
 	}
+	return 0;
 }
