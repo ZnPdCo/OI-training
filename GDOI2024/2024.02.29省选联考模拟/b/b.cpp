@@ -1,4 +1,4 @@
-#include <cstdio>
+#include <bits/stdc++.h>
 #define ll long long
 #define N 6000010
 #define ls(x) (t[x].lson)
@@ -11,6 +11,18 @@ struct node {
 	ll lson, rson;
 } t[4*N];
 ll cnt = 0;
+
+inline char gc() {
+	const int BUF = 1e6;
+	static char ch[BUF], *l, *r;
+	return (l == r && (r = (l = ch) + fread(ch, 1, BUF, stdin), l == r)) ? EOF : *l++;
+}
+template <typename T> inline void read(T &x) {
+	x = 0; int f = 1; char c = gc();
+	for (; !isdigit(c); c = gc()) if (c == '-') f = -f;
+	for (; isdigit(c); c = gc()) x = (x << 1) + (x << 3) + (c ^ 48);
+	x *= f;
+}
 
 inline ll calc(ll a, ll x, ll y) {
 	return (a - y + x - 1) / x;
@@ -104,10 +116,10 @@ ll query(ll x, ll l, ll r, ll &pos) {
 int main() {
 	freopen("b.in", "r", stdin);
 	freopen("b.out", "w", stdout);
-	scanf("%lld %lld", &m, &n);
+	read(m), read(n);
 	for(ll i = 1; i <= m; i++) {
 		ll l, r;
-		scanf("%lld %lld", &l, &r);
+		read(l), read(r);
 		ll L = query(l, 1, n, rt);
 		ll R = query(r, 1, n, rt);
 		printf("%lld %lld\n", L, R);

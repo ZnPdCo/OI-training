@@ -1,0 +1,1019 @@
+// ==UserScript==
+// @name         GMOJ Better
+// @namespace    https://greasyfork.org/zh-CN/users/1223216-znpdco
+// @version      1.5.2
+// @description  可能会维护的GMOJ加强插件
+// @author       ZnPdCo
+// @match        https://gmoj.net/*
+// @icon         https://gmoj.net/favicon.ico
+// @grant        unsafeWindow
+// @grant        GM_log
+// @grant        GM_openInTab
+// @grant        GM_deleteValue
+// @grant        GM_xmlhttpRequest
+// @grant        GM_registerMenuCommand
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_setClipboard
+// @require      https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js
+// @license      MIT
+// @connect      localhost
+// @connect      update.greasyfork.org
+// @downloadURL https://update.greasyfork.org/scripts/484886/GMOJ%20Better.user.js
+// @updateURL https://update.greasyfork.org/scripts/484886/GMOJ%20Better.meta.js
+// ==/UserScript==
+
+const GmojVersion = "1.5.2";
+const GmojTitle = 'GMOJ Better';
+const updateMsg = {'2024-2-2': '1.增加更新公告（可在右上角设置手动关闭）\n2.status、standing、statistic页面自动更新，无需手动刷新。\n3.实验性功能已关闭。',
+                   '2024-2-3': '1.自动刷新bug修复\n2.oj自己的刷新错误bug修复',
+                   '2024-2-3-8:00': '删除overlay',
+                   '2024-2-3-8:30': '修复不兼容bug（目前自动登录在chrome还不可用）',
+                   '2024-2-3-8:40': 'bug',
+                   '2024-2-15': '自动刷新太傻逼了，删了',
+                   '1.1': '改成数字版本号',
+                   '1.2': '修复自动刷新功能',
+                   '1.3': '1.自动删除/添加freopen\n2.剪贴板读取提交题目',
+                   '1.4':  '|| 写成 &&',
+                   '1.4.1':  'const忘删了',
+                   '1.4.2':  '对比赛博客页启动Vditor，支持markdown语法提交，支持上传图片（base64），不怎么稳定，遇到bug请反馈。',
+                   '1.4.3':  'vditor bug 修复，支持修改markdown',
+                   '1.4.4':  'vditor默认所见即所得',
+                   '1.4.5':  '站内信使用vditor，支持多行',
+                   '1.4.6':  '6',
+                   '1.4.7':  'vditor bug fixed',
+                   '1.5': '计算Ratings',
+                   '1.5.1': '把 Ratings 和比赛编号搞反了，我就说为什么总是4千多ratings',
+                   '1.5.2': '进行重构，部分功能因为新旧混用而导致无法使用，该阶段不修复任何bug'};
+
+(function() {
+    // @param module     模块名称
+    // @param type       模块类型，0表示布尔类模块，1表示字符串类模块
+    // @param val        默认值
+    // @param name       显示名称
+    // @param func       执行函数
+    // @param tips       提示
+    const boolModule = 0;
+    const strModule = 1;
+    const radioModule = 1;
+    var modules = [];
+
+    function registerModule(module, type, val, name, tips, func) {
+        if (GM_getValue(module) === undefined) {
+            GM_setValue(module, val);
+        }
+
+        if (type === boolModule) {
+            if (GM_getValue(module) === true) {
+                GM_registerMenuCommand('✅' + name, function() {
+                    GM_setValue(module, false);
+                    location.reload();
+                });
+            } else if (GM_getValue(module) === false) {
+                GM_registerMenuCommand('❎' + name, function() {
+                    GM_setValue(module, true);
+                    location.reload();
+                });
+            }
+        } else if (type === strModule) {
+            GM_registerMenuCommand('✏️' + name, function() {
+                var userInput = window.prompt(tips, GM_getValue(module));
+                if (userInput === null) return;
+                GM_setValue(module, userInput);
+                location.reload();
+            });
+        } else if (type === radioModule) {
+            GM_registerMenuCommand('🔘' + name, function() {
+                func();
+            });
+        }
+        if(type === strModule || (type === boolModule && GM_getValue(module) === true)) {
+            modules.push(func);
+        }
+    }
+
+    setInterval(function(){
+        if(!$('#page_content')[0].innerHTML.includes('<gmojbetter></gmojbetter>')) {
+            $('#page_content').append('<gmojbetter></gmojbetter>');
+            for(var i = 0; i < modules.length; i++) {
+                var func = modules[i];
+                func();
+            }
+        }
+    }, 200);
+
+    // 自动选择语言
+    registerModule('auto-lang', strModule, '["c++14", "c++11", "c++", "c", "pascal"]', '设置「提交语言优先级」', '提交代码界面选择语言优先级', function() {
+        var order = JSON.parse(GM_getValue('auto-lang'));
+        for(var i = 0; i < order.length; i++) {
+            var lang = order[i];
+            var Lang = lang.substring(0, 1).toUpperCase() + lang.substring(1);  // customtest的选项为首字母大写
+            if($('.one-file .language').length && $('.one-file .language').find(`option[value="${lang}"]`).length) { // 代码提交界面
+                $('.one-file .language').val(lang);
+                break;
+            }
+            if($('.run_control .language').length && $('.run_control .language').find(`option[value="${Lang}"]`).length) { // CustomTest界面
+                $('.run_control .language').val(Lang);
+                break;
+            }
+        }
+    });
+
+    // 添加界面锁，防止断网后手残
+    registerModule('add-locker', boolModule, true, '添加「界面锁」按钮', null, function() {
+        if($('#problem_judge_details').length) {
+            $('#problem_judge_details').eq(0).append('<a id="locker" class="gmojbetter icon-lock" title="锁定/解锁页面"></a>');
+            $('#locker').click(function() {
+                if($('#locker').hasClass('icon-lock')) {
+                    $('#locker').toggleClass('icon-lock');
+                    $('#locker').toggleClass('icon-refresh');
+
+                    $('a,button,input,span,select').not('.gmojbetter').attr('disabled',true).css('pointer-events', 'none');
+                    window.addEventListener('beforeunload', function (e) {
+                        e.preventDefault();
+                        e.returnValue = '你设置了页面锁，是否确定要离开？';
+                    });
+
+                    setInterval(function() {
+                        $('a,button,input,span,select').not('.gmojbetter').attr('disabled',true).css('pointer-events', 'none');
+                        window.addEventListener('beforeunload', function (e) {
+                            e.preventDefault();
+                            e.returnValue = '你设置了页面锁，是否确定要离开？';
+                        });
+                    }, 1000);
+                } else {
+                    location.reload();
+                }
+            });
+        }
+    });
+
+    // 自动打开比赛所有试题
+    registerModule('open-problems', boolModule, true, '添加「打开比赛所有试题」按钮', null, function() {
+        var problems = $('#contest_problems a');
+        if(problems.length) {
+            $('.nav').eq(1).append('<li><a id="open_problems" style="cursor: pointer;" class="gmojbetter">打开所有题目</a></li>');
+            $('#open_problems').click(function(){
+                for(var i = problems.length-1; i >= 0; i--){
+                    GM_openInTab(problems[i].href, true);
+                }
+            });
+        }
+    });
+
+    // 复制文操
+    registerModule('copy-fileio', boolModule, true, '添加「复制文件操作」按钮', null, function() {
+        var fileio = $('.row-fluid [style*="color: red; font-weight: bold;"]');
+        if(fileio.eq(0).text().includes('.in')) {
+            $('#problem_judge_details').eq(0).append('<a id="fileio" class="gmojbetter icon-file" title="复制文件操作"></a>');
+            $('#fileio').click(function() {
+                $('#fileio')[0].className = 'gmojbetter icon-ok';
+                setTimeout(function() {
+                    $('#fileio')[0].className = 'gmojbetter icon-file';
+                }, 1000);
+                var code = GM_getValue('fileio-code').replaceAll('{cr}', '\n').replaceAll('{tab}', '\t').replaceAll('{input}', fileio.eq(0).text()).replaceAll('{output}', fileio.eq(1).text());
+                GM_setClipboard(code);
+            });
+        }
+    });
+    registerModule('fileio-code', strModule, 'freopen("{input}", "r", stdin);{cr}{tab}freopen("{output}", "w", stdout);', '设置「复制文件操作」代码', '文件操作代码？（‘{input}’为输入文件名（含后缀），‘{output}’为输出文件名（含后缀），‘{cr}’为换行，‘{tab}’为tab）', function() {});
+
+    // 传送cph
+    registerModule('add-cph', boolModule, true, '添加「cph传送」按钮', null, function() {
+        if($('.sample_pre').length) {
+            $('#problem_judge_details').eq(0).append('<a id="cph" class="gmojbetter icon-download" title="传送到cph"></a>');
+            $('#cph').click(async function() {
+                // 发送cph
+                function postCph(post, data) {
+                    window.cphError = false;
+
+                    return new Promise((resolve, reject) => {
+                        GM_xmlhttpRequest({
+                            url: `http://localhost:${post}/`,
+                            method: "POST",
+                            data: data,
+                            onload(f) {
+                                if(f.status === 502) {
+                                    window.cphError = true;
+                                }
+                                resolve(f.response);
+                            },
+                            onerror(e) {
+                                window.cphError = true;
+                                resolve(e);
+                            }
+                        })
+                    });
+                }
+                var url = location.href;
+                var url_list = location.hash.split('/');
+                var nums = [];
+                for(let i = 0; i < url_list.length; i++) {
+                    if(/^\d+$/.test(url_list[i])) { // 如果这个是数字，说明是pid
+                        nums.push(url_list[i]);
+                    }
+                }
+                var name = 'GMOJ_' + nums.join('_');
+                name = window.prompt('cph题目名称？', name);
+                if(name == null) return;
+                const test = $('.sample_pre');
+                let res_test = [];
+                for (let i = 0; i < test.length; i ++) {
+                    test.eq(i).html(test.eq(i).html().replaceAll('<br>', '\n'));
+                }
+                for (let i = 0; i < test.length; i += 2) {
+                    res_test.push({
+                        input: test.eq(i).text(),
+                        output: test.eq(i+1).text()
+                    })
+                }
+
+                var data = JSON.stringify({
+                    name: name,
+                    url: url,
+                    tests: res_test
+                });
+
+                // 用户自定义端口
+                if(GM_getValue('cph-post') != undefined && GM_getValue('cph-post') != 27121 && GM_getValue('cph-post') != 10045) {
+                    await postCph(GM_getValue('cph-post'), data);
+                    if(!window.cphError) {
+                        $('#cph').toggleClass('icon-ok');
+                        $('#cph').toggleClass('icon-download');
+                        setTimeout(function() {
+                            $('#cph').toggleClass('icon-ok');
+                            $('#cph').toggleClass('icon-download');
+                        }, 1000);
+                        return;
+                    }
+                }
+
+                await postCph('27121', data); // 常见端口
+                if(!window.cphError) {
+                    $('#cph').toggleClass('icon-ok');
+                    $('#cph').toggleClass('icon-download');
+                    setTimeout(function() {
+                        $('#cph').toggleClass('icon-ok');
+                        $('#cph').toggleClass('icon-download');
+                    }, 1000);
+                    return;
+                }
+                await postCph('10045', data); // 小熊猫默认端口
+                if(!window.cphError) {
+                    $('#cph').toggleClass('icon-ok');
+                    $('#cph').toggleClass('icon-download');
+                    setTimeout(function() {
+                        $('#cph').toggleClass('icon-ok');
+                        $('#cph').toggleClass('icon-download');
+                    }, 1000);
+                    return;
+                }
+                alert('cph跳转失败,请检查是否开启cph客户端,或者是否配置cph端口(一般情况下无需配置)');
+            });
+        }
+    });
+    registerModule('cph-post', strModule, '27121', '设置「cph传送」', 'cph端口号（默认为27121、10045，一般无需设置）', function() {});
+
+
+
+    function showVersion() {
+        if(GM_getValue('showVersion') == false) return;
+        console.log(
+            `%c ${GmojTitle} %c V${GmojVersion} `,
+            'padding: 2px 1px; border-radius: 3px 0 0 3px; color: #fff; background: #606060; font-weight: bold;',
+            'padding: 2px 1px; border-radius: 0 3px 3px 0; color: #fff; background: #42c02e; font-weight: bold;'
+        );
+    }
+    function showDebug(text) {
+        if(GM_getValue('showDebug') == false) return;
+        console.log(
+            `%c[${GmojTitle}] %c${text} `,
+            'color: green;',
+            ''
+        );
+    }
+
+    // 检查更新
+    registerModule('check-update', boolModule, true, '开启「自动检查更新」', null, async function() {
+        const updateUrl = "https://update.greasyfork.org/scripts/484886/GMOJ%20Better.user.js";
+        GM_xmlhttpRequest({
+            method: "GET",
+            url: updateUrl,
+            onload: function(f) {
+                showDebug(`Update info:${f.responseText}`);
+                if(!f.responseText.includes('"'+GmojVersion+'"')) {
+                    location.href = updateUrl;
+                }
+            }
+        });
+    });
+
+    // 在首页插入box
+    registerModule('insert-box', boolModule, true, '添加「首页倒计时」', null, async function() {
+        if(window.boxHTML != null) {
+            if($('.hero-unit').length) {
+                $(window.boxHTML).insertAfter('.thumbnail.span3');
+            }
+            return;
+        }
+        window.boxHTML = null;
+        $.get("https://gmoj.net/senior/index.php/users/2022%E4%B8%89%E9%91%AB%E9%BB%84%E6%99%AF%E6%A2%B5",function(data,status){
+            var ele = $(data);
+            var obj = JSON.parse(ele.find('i').text());
+            var date = new Date(obj.date).getTime() - new Date().getTime();
+            var days = Math.ceil(date/(24*3600*1000));
+
+            window.boxHTML = `<div class="thumbnail span3">
+<legend><h4>${GmojTitle}</h4></legend>
+<ul class="unstyled text-success">
+<li><strong>V${GmojVersion}</strong></li>
+<li><strong>距离${obj.title}还剩${days}天</strong></li>
+</ul>
+</div>`;
+            if($('.hero-unit').length) {
+                $(window.boxHTML).insertAfter('.thumbnail.span3');
+            }
+        });
+    });
+    // 自动登录
+    function autoLogin() {
+        if(GM_getValue('autoLogin') != true) return;
+        if($('[name="username"]').length && $('[name="password"]').length && $('.btn.btn-primary.pull-right').length) {
+            if(GM_getValue('password') == undefined) {
+                $('.btn.btn-primary.pull-right').click(function() {
+                    GM_setValue('username', $('[name="username"]')[0].value);
+                    GM_setValue('password', $('[name="password"]')[0].value);
+                });
+            } else {
+                if($('[class*="alert-error"][style!="display:none"]').length) {
+                    GM_deleteValue('username');
+                    GM_deleteValue('password');
+                    autoLogin();
+                    return;
+                }
+                $('[name="username"]')[0].value = GM_getValue('username');
+                $('[name="password"]')[0].value = GM_getValue('password');
+                $('.btn.btn-primary.pull-right').click();
+            }
+        }
+        if($('[name="old_password"]').length) {
+            if(GM_getValue('password') != undefined) {
+                $('[name="old_password"]')[0].value = GM_getValue('password');
+            }
+        }
+        if($('#logout').length) {
+            $('#logout').click(function() {
+                GM_deleteValue('username');
+                GM_deleteValue('password');
+            });
+        }
+    }
+    function queryParam(key) {
+        const url = new URL(location.href.replaceAll('#', ''));
+        var reg = new RegExp('[\?\&]' + key + '=([^\&]*)(\&?)', 'i');
+        var r = url.search.match(reg);
+        return r ? r[1] : '';
+    }
+
+    // 提交代码相关
+    async function submitCode() {
+        if($('#problem_judge_details').length) {
+            /*$(`<button class="btn btn-primary" onclick="
+            if (typeof(window.fileHandles)=='undefined') window.fileHandles={};
+            async function autoSubmit() {
+                if($('#pid').val() in window.fileHandles) {
+                    var fileHandle = window.fileHandles[$('#pid').val()];
+                } else {
+                    var [fileHandle] = await window.showOpenFilePicker();
+                    window.fileHandles[$('#pid').val()] = fileHandle;
+                }
+                const file = await fileHandle.getFile();
+                text = await file.text();
+                localStorage.setItem('gmcode', text);
+                load_page('main/submit/4430?code=local');
+            }
+            autoSubmit();" style="margin-left: 10px;" title="从本地选择文件读取提交，若不刷新会自动读取并更新">Auto Submit</button>`).insertAfter('.btn.btn-primary:contains(Submit)');
+            */
+        }
+        if(location.hash.includes('#main/submit')) {
+            /*$(`<a onclick="const a = document.createElement('a');
+a.setAttribute('href', 'data:text/application/x-zip-compressed;base64,UEsDBBQAAAAIACOdUViYnY5kvQMAAGEHAAAHAAAAZ21idC5weZ1V328bRRB+t+T/YeU83J04znWSB7DqgoQoqoQA0eQpsk6XeM/e5n6xu64TIaSoapoUEhxoaNoSAVVTsJBqUwEhjhPln/Ge7Sf+BWbP58SnuCqqddJ5d2dnvvlmvjlOV/PpFIKfTX0X2Y7FlhFxA59ydF0udETxF1XMOEJTSLROxPrzaF8cPxDfb8VnotXuv3w69BNfZqssseYViq0S8crJXeLixMYt5nuJDT/phpGyZzmJrRpeXKR+jWGaTuGVJRxw9GH0Ir6HLIZwfqJDnxmAkWNXzQQkQMRj3HKcmIFztGPeM1o6lU5NofDZWvjzc/Hdabdz0H+6Jep3wh/+gGewUU+niI0c7Kng2bBo+baGPJ+Db7Qwo6PZYowkoMTjamaeWWWcR8EqrwBStkRJwI1gFV21iYPNwOKVa+gqeMldQwvwmi5mtOF96R2vEK7mYkj9VkfUH4YPN7qdQ3FvXTTb6VSN8ArygzEwC7mijjI0oyPsLfkyu4IyP3f97XcUTfJkx+g4XuGogGxDUqDGEcSvd8Kf9rtH2+LFI7HfGKxv906bw4D/nmyJzcdi80fROe4erXWPfh90HvWbB+M26VQJ21bV4eaS79mkHGUHQZQP8tmyu8gNWXflkhW8OPYkGqXCecDyWbD2bxke5lmGPeLT7JRrES/Lqosu4dkvv4JHiaogeYcSyziSK8aZOgGCFud8QdYEIyCt9jrSIgUZNUo4VicnkSjVODeXCzYZw+sLZ7nB5cJFdYklu9vbbaRTViDNoi3VND3LxaY5sm4+6bbvg1X3+Fux/udg78XwUu/JXbFxCk0elQixSpWX/JqncqJH/aKjgJRGZEpRG8zBOIBzbbzlpal2Lr9l4jgq3NNjVRs3b3x045O5BJT+P63e7ktxcLe3c2+E4H1IwKB+lWNVySo6cjEIqMQKC8pnn96cU4raECTxSnhFPQeFCheqNuaifyoHWWBeGKWjI1izgprTkeIvK7oECecAUdV0LQbODRgUlKvxkmJepV5EwhB396gzBAqTUtSfRc04YhkVoJNNU7asaSoxMkh1pyW+bgy10zs+6zW+AU3FRdiX+8BFuHc42PtL7CTK8gapXYHcZIGAvv+XIAy8X9rhdnPiwAvvPxAna+Hf9f5vm+JxQ7QP+82zwV4z3NoAzPOffzz0cWkqAg8zY8q5GLJGJADZyYbtU9fiF9NrGqaXomhvKe+BBnABjG9jqmivjjD7JhHOFzPFV4QCDZ/tAA8JTcmDqC2rnio/M4XpK7O5d+HGf1BLAQIfABQAAAAIACOdUViYnY5kvQMAAGEHAAAHACQAAAAAAAAAIAAAAAAAAABnbWJ0LnB5CgAgAAAAAAABABgA9H2cMZZh2gH0fZwxlmHaAQ7OGX6OYdoBUEsFBgAAAAABAAEAWQAAAOIDAAAAAA==');
+a.setAttribute('download', 'gmbt.zip');
+a.click();">下载gmbt客户端，本地提交代码</a>`).insertAfter('#hint-allow-submit');*/
+
+            var text = '';
+
+            var code = queryParam('code');
+
+            // 从地址栏读取代码
+            if(code == 'local') {
+                text = localStorage.getItem("gmcode");
+            } else if(code == 'server') {
+                var post = 20419;  // 暂定gmbt客户端端口
+                await new Promise((resolve, reject) => {
+                    GM_xmlhttpRequest({
+                        url: `http://localhost:${post}/`,
+                        method: "POST",
+                        data: {},
+                        onload(f) {
+                            window.servercode = f.response;
+                            resolve(f.response);
+                        },
+                        onerror(e) {
+                            resolve(e);
+                        }
+                    })
+                });
+                text = window.servercode;
+            } else {
+                text = await navigator.clipboard.readText();
+            }
+
+            if(text.includes('//freopen') || text.includes('//\tfreopen') || text.includes('//  freopen')) {
+                var res = confirm("检测你在代码中注释了一处 freopen。\n是否解除该注释？");
+                if(res == true) {
+                    text = text.replaceAll('//freopen', 'freopen');
+                    text = text.replaceAll('//\tfreopen', '\tfreopen');
+                    text = text.replaceAll('//  freopen', '    freopen');
+                }
+            }
+            if($('.toggle_editor').is(":checked")) $('.toggle_editor').click();
+            $('.submit-editor.span12').val(text);
+            $('.toggle_editor').click();
+
+            if(code!='') {
+                $('.btn.btn-primary.pull-right').click();
+            }
+        }
+    }
+
+    // 论坛页使用vditor（不稳定？）
+    function ForumToVditor() {
+        // 由于不知名bug，必须先打开一次编辑题目页才可以渲染
+        var Frame = document.createElement('iframe');
+        Frame.src='#admin/addproblem';
+        if(location.hash.includes('forum')) {
+
+
+            $(`<div id='titleVditor'></div>`).insertBefore('#title');
+            var titlev = new Vditor('titleVditor', {
+                cache: {
+                    enable: false,
+                },
+                mode: 'wysiwyg',
+                toolbarConfig: {
+                    hide: true,
+                },
+                blur() {
+                    $('#title').html(titlev.getHTML().replaceAll('</p>', '</p>gmojbetter123456')
+                                     .replaceAll('</b>', '</b>gmojbetter123456')
+                                     .replaceAll('</i>', '</i>gmojbetter123456')
+                                     .replaceAll('</del>', '</del>gmojbetter123456') + `<a href="${window.btoa(unescape(encodeURIComponent(titlev.getValue())))}">　</a>`);
+                    title.setData(title.getData().replaceAll('gmojbetter123456', '\n'));
+                }
+            });
+            $('#title').hide();
+
+            $(`<div id='contentVditor'></div>`).insertBefore('#content');
+            var contentv = new Vditor('contentVditor', {
+                cache: {
+                    enable: false,
+                },
+                height: 360,
+                mode: 'wysiwyg',
+                toolbar:['headings', 'bold', 'italic', 'strike', 'link', '|', 'list', 'ordered-list', 'quote', 'code', 'inline-code',{
+                    name:'image',
+                    tipPosition: 's',
+                    tip: '上传图片',
+                    className: 'right',
+                    icon: '<svg><use xlink:href="#vditor-icon-upload"></use></svg>',
+                    click () {
+                        var fileselect = document.createElement('input');
+                        fileselect.type = 'file';
+                        fileselect.accept = "image/jpeg,image/png,image/jpg";
+                        fileselect.addEventListener("change", function() {
+                            if(this.files.length) {
+                                var file = this.files[0];
+                                var reader = new FileReader();
+                                reader.onloadend = function () {
+                                    contentv.insertValue(`![](${reader.result})`+'\n');
+                                }
+                                if (file) {
+                                    reader.readAsDataURL(file);
+                                }
+                            }
+                        });
+                        fileselect.click();
+                    }
+                }, '|', 'undo', 'redo', '|', 'fullscreen', 'edit-mode'],
+                blur() {
+                    $('#content').html(contentv.getHTML().replaceAll('</p>', '</p>gmojbetter123456')
+                                       .replaceAll('</b>', '</b>gmojbetter123456')
+                                       .replaceAll('</i>', '</i>gmojbetter123456')
+                                       .replaceAll('</del>', '</del>gmojbetter123456') + `<a href="${window.btoa(unescape(encodeURIComponent(contentv.getValue())))}">　</a>`);
+                    content.setData(content.getData().replaceAll('gmojbetter123456', '\n'));
+                }
+            });
+            $('#content').hide();
+
+            // 重载修改函数
+            if($('.mdfy').length) {
+                $('.mdfy').click(function(){
+                    titlev.setValue(decodeURIComponent(escape(window.atob($('.mdfy').parent().find('a:contains("　")')[0].title))));
+                    contentv.setValue(decodeURIComponent(escape(window.atob($('.mdfy').parent().find('a:contains("　")')[1].title))));
+                });
+            }
+        }
+        if(location.hash.includes('#misc/newmail')) {
+            $(`<div id='contentVditor'></div>`).insertBefore('#content');
+            var contentv = new Vditor('contentVditor', {
+                cache: {
+                    enable: false,
+                },
+                height: 360,
+                mode: 'wysiwyg',
+                toolbar:['headings', 'bold', 'italic', 'strike', 'link', '|', 'list', 'ordered-list', 'quote', 'code', 'inline-code',{
+                    name:'image',
+                    tipPosition: 's',
+                    tip: '上传图片',
+                    className: 'right',
+                    icon: '<svg><use xlink:href="#vditor-icon-upload"></use></svg>',
+                    click () {
+                        var fileselect = document.createElement('input');
+                        fileselect.type = 'file';
+                        fileselect.accept = "image/jpeg,image/png,image/jpg";
+                        fileselect.addEventListener("change", function() {
+                            if(this.files.length) {
+                                var file = this.files[0];
+                                var reader = new FileReader();
+                                reader.onloadend = function () {
+                                    contentv.insertValue(`![](${reader.result})`+'\n');
+                                }
+                                if (file) {
+                                    reader.readAsDataURL(file);
+                                }
+                            }
+                        });
+                        fileselect.click();
+                    }
+                }, '|', 'undo', 'redo', '|', 'fullscreen', 'edit-mode'],
+                blur() {
+                    $(`<div id="svgg" style='width: 200px; white-space:normal; word-break:break-all;overflow:hidden;'>
+     ${contentv.getHTML()}
+    </div>`).insertAfter('body')
+                    $(`<svg width="${$('#svgg').outerWidth()}" height="${$('#svgg').outerHeight()}" xmlns="http://www.w3.org/2000/xhtml" id="svggg">
+    <foreignObject width="100%" height="100%" y="0" x="0">
+    <style>
+    *{
+        margin:0;
+        }
+        blockquote{
+           margin:0 0 0 1em;
+       }
+    </style>
+  <div xmlns="http://www.w3.org/1999/xhtml" style='width: 100%; white-space:normal; word-break:break-all;overflow:hidden;'>
+     ${contentv.getHTML()}
+    </div>
+  </foreignObject>
+    </svg>`).insertAfter('body')
+                    $('#svgg p').css('margin',  '0')
+                    var svg = document.getElementById('svggg')
+                    const s = new XMLSerializer().serializeToString(svg);
+                    const src = `data:image/svg+xml;base64,${window.btoa(unescape(encodeURIComponent(s)))}`;
+                    cd.setData('[img]'+src+'[/img]');
+                    $('#svgg').remove();
+                    $('#svggg').remove();
+                }
+            });
+            $('#content').hide();
+        }
+    }
+
+    // 更新rating数据（From P1000）
+    function updRating() {
+        function getSeed(rating, ratings) {
+            var seed = 1;
+            for(const [key, value] of Object.entries(ratings)){
+                seed += 1.0/(1+Math.pow(10, (rating-key)/400.0)) * value;
+            }
+            return seed;
+        }
+        if(location.hash.includes('#contest/standing/')){
+            id = parseInt(location.hash.replace('#contest/standing/', '').split('/')[0])
+            $.ajax({
+                type: "GET",
+                url: "https://gmoj.net/senior/index.php/main/userinfo",
+                async: false,
+                success: function(data) {
+                    var ele = $.parseHTML(data);
+                    window.username = ele[1].querySelector('.label').innerText;
+                },
+                error: function(xhr, statusText, error) {}
+            });
+            $.ajax({
+                type: "GET",
+                url: "https://gmoj.net/senior/index.php/main/problemset",
+                async: false,
+                success: function(data) {
+                    var ele = $.parseHTML(data);
+                    window.text = ele[9].querySelector('tr input').value;
+                },
+                error: function(xhr, statusText, error) {}
+            });
+            const tips = '该内容为 GMOJ Better 创建的临时储存，请勿修改或删除。';
+
+            if(!text.includes(tips)) {
+                text = `{"1": [],"2":[],"3": ${id}}`;
+            } else {
+                text = text.replace(tips, '');
+            }
+            var obj = JSON.parse(text);
+            var rating = 0;
+            if(obj["1"].length) {
+                rating = obj["1"][obj["2"].length-1];
+                if(obj["3"]>=id) return;
+            }
+
+            if($(`tbody tr td .label.label-info:contains("${username}")`).length == 0) return;
+
+            var myrank = $(`tbody tr td .label.label-info:contains("${username}")`).parent().parent().prev().text();
+            var allrank = $('tbody tr td .label.label-info').length;
+
+
+            $.ajax({
+                type: "GET",
+                url: "https://gmoj.net/senior/index.php/contest/home/" + id,
+                async: false,
+                success: function(data) {
+                    var ele = $.parseHTML(data);
+                    window.isEnd = ele[2].querySelector('.label').innerText;
+                    window.contentname = ele[2].querySelector('h2').innerText;
+                },
+                error: function(xhr, statusText, error) {}
+            });
+            if(isEnd != 'Ended') return;
+            var ratings = {};
+            if(contentname.includes('省选')) {
+                ratings[800] = 0.4 * allrank;
+                ratings[1200] = 0.4 * allrank;
+                ratings[2400] = 0.19 * allrank;
+                ratings[3600] = 0.01 * allrank;
+            }
+            else if(contentname.includes('A')) {
+                ratings[600] = 0.2 * allrank;
+                ratings[800] = 0.3 * allrank;
+                ratings[1200] = 0.499 * allrank;
+                ratings[2400] = 0.001 * allrank;
+            }
+            else if(contentname.includes('B')) {
+                ratings[600] = 0.2 * allrank;
+                ratings[800] = 0.4 * allrank;
+                ratings[1200] = 0.4 * allrank;
+            }
+            else if(contentname.includes('C')) {
+                ratings[600] = 0.4 * allrank;
+                ratings[800] = 0.5 * allrank;
+                ratings[1200] = 0.1 * allrank;
+            }
+            else {
+                ratings[600] = 0.379 * allrank;
+                ratings[800] = 0.4 * allrank;
+                ratings[1200] = 0.2 * allrank;
+                ratings[2400] = 0.02 * allrank;
+                ratings[3600] = 0.001 * allrank;
+            }
+            showDebug(ratings);
+            var seed = getSeed(rating, ratings);
+            var l = 0, r = 3600, mid, m = rating;
+            while(l <= r) {
+                mid = (l+r)/2;
+                seed = getSeed(mid, ratings);
+                showDebug(`当你的rating为${mid}时，预测排名为${seed}`);
+                if(myrank<=seed) {
+                    l = mid + 1;
+                    m = mid;
+                } else {
+                    r = mid - 1;
+                }
+            }
+            showDebug(`你的rating为(${rating}+${mid})/2=${Math.round((rating+m)/2)}`);
+            rating = Math.round((rating+m)/2);
+            obj["1"].push(rating)
+            obj["2"].push(id)
+            while((tips+JSON.stringify(obj)).length > 250) {
+                obj["1"] = obj["1"].slice(1);
+                obj["2"] = obj["2"].slice(1);
+            }
+            obj["3"] = id;
+            $.post("index.php/main/upd_bookmark/1000", {
+                star: 'false',
+                note: tips+JSON.stringify(obj)
+            });
+        }
+    }
+    function showRating() {
+        $(`<a id="show_ratings" onclick="
+        function run() {
+        $.ajax({
+            type: 'GET',
+            url: 'https://gmoj.net/senior/index.php/main/userinfo',
+            async: false,
+            success: function(data) {
+                var ele = $.parseHTML(data);
+                window.username = ele[1].querySelector('.label').innerText;
+            },
+            error: function(xhr, statusText, error) {}
+        });
+        if(location.hash.includes('#users/'+encodeURIComponent(username))){
+            $('#show_ratings').hide();
+            $('<div id=\\'ratings\\' class=\\'gmojbetter\\'></div>').insertAfter('#user-header');
+            $.ajax({
+                type: 'GET',
+                url: 'https://gmoj.net/senior/index.php/main/problemset',
+                async: false,
+                success: function(data) {
+                    var ele = $.parseHTML(data);
+                    window.text = ele[9].querySelector('tr input').value;
+                },
+                error: function(xhr, statusText, error) {}
+            });
+            text = window.text;
+            const tips = '该内容为 GMOJ Better 创建的临时储存，请勿修改或删除。';
+
+
+            if(!text.includes(tips)) {
+                return;
+            } else {
+                text = text.replace(tips, '');
+            }
+            var obj = JSON.parse(text);
+            var title = {
+                text: 'Ratings'
+            };
+            var subtitle = {
+                text: 'Source: GMOJ Better'
+            };
+            var xAxis = {
+                title: {
+                    text: 'Contest ID'
+                },
+                categories: obj['2']
+            };
+            var yAxis = {
+                title: {
+                    text: 'Score'
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            };
+
+            var tooltip = {
+                valueSuffix: ''
+            }
+
+            var legend = {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'middle',
+                borderWidth: 0
+            };
+            var series =  [
+                {
+                    name: window.username + ' 的 Ratings',
+                    data: obj['1']
+                }
+            ];
+
+            var json = {};
+
+            json.title = title;
+            json.subtitle = subtitle;
+            json.xAxis = xAxis;
+            json.yAxis = yAxis;
+            json.tooltip = tooltip;
+            json.legend = legend;
+            json.series = series;
+
+            $('#ratings').highcharts(json);
+        }
+        }
+        run();"></a>`).insertAfter('body');
+        $('#show_ratings').click()
+    }
+
+    function checkUpdMsg() {
+        if(GM_getValue('showUpdMsg') == false) return;
+        if(GM_getValue('version') == GmojVersion) return;
+        var msg = '';
+        var show = false;
+        if(!(GM_getValue('version') in updateMsg)) show = true;
+        for(const [key, value] of Object.entries(updateMsg)) {
+            if(key == GM_getValue('version') || show) {
+                if(!show) {
+                    show = true;
+                    continue;
+                }
+                if(msg != '') msg += '\n';
+                msg += `版本 ${key}：${value}`;
+            }
+        }
+        GM_setValue('version', GmojVersion);
+        alert(msg);
+    }
+
+    function downloadSRC() {
+        if(location.hash.includes('#main/statistic')){
+            $(`<button class="gmojbetter btn btn-small" id="downloadSRC" style="margin-left: 10px;">下载当前页所有AC代码到文件夹（For Hack）</button>`).insertAfter('.btn.btn-small');
+            $('#downloadSRC').click(async function() {
+                async function getSRC() {
+                    window.savecode = {};
+                    len = $('tbody tr').length;
+                    for (i = 0; i < len; i++) {
+                        var ele = $(`tbody tr:eq(${i}) a`);
+                        if(ele[1].innerText.includes('Accepted') && (ele[2].innerText == 'C++' || ele[2].innerText == 'C++11' ||ele[2].innerText == 'C++14')) {
+                            url = `index.php/main/codedownload/${$('tbody tr:eq('+i+') a')[2].href.split('/')[6]}/SRC?ext=cpp`;
+                            $.ajax({
+                                type: "GET",
+                                url: url,
+                                async: false,
+                                success: function(code) {
+                                    var name = ele[0].innerText;
+                                    window.savecode[name] = code;
+                                    showDebug(name);
+                                },
+                                error: function(xhr, statusText, error) {}
+                            });
+                        }
+                    }
+                }
+                try {
+                    await Promise.all([getSRC()]);
+                    const dirHandle = await showDirectoryPicker();
+                    for (const [name, code] of Object.entries(window.savecode)) {
+                        const newdirHandle = await dirHandle.getDirectoryHandle(name, { create: true });
+                        const docHandle = await newdirHandle.getFileHandle('SRC.cpp', { create: true });
+                        const writable = await docHandle.createWritable();
+                        writable.write(code);
+                        writable.close();
+                    }
+                    alert('下载成功！');
+                } catch(error) {
+                    alert('下载失败！');
+                }
+            });
+        }
+    }
+
+    // 设置实验性功能时弹出警告
+    function showDanger() {
+        alert('注意:实验性功能主要为不稳定功能,开启实验性功能后OJ使用可能会受到影响,请谨慎使用.');
+    }
+
+    function setMenuCommand() {
+        GM_registerMenuCommand('==GMOJ Better设置==');
+        GM_registerMenuCommand('恢复默认设置', function() {
+            autoSettings(true);
+            location.reload();
+        });
+        GM_registerMenuCommand('检查更新', function() {
+            checkUpdate();
+        });
+        if(GM_getValue('showUpdMsg') == false) {
+            GM_registerMenuCommand('显示更新公告', function() {
+                GM_setValue('showUpdMsg', true);
+                GM_setValue('version', undefined);
+                location.reload();
+            });
+        } else {
+            GM_registerMenuCommand('隐藏更新公告', function() {
+                GM_setValue('showUpdMsg', false);
+                location.reload();
+            });
+        }
+        GM_registerMenuCommand('==控制台设置==');
+        if(GM_getValue('showVersion') == false) {
+            GM_registerMenuCommand('显示版本号信息', function() {
+                GM_setValue('showVersion', true);
+                location.reload();
+            });
+        } else {
+            GM_registerMenuCommand('隐藏版本号信息', function() {
+                GM_setValue('showVersion', false);
+                location.reload();
+            });
+        }
+        if(GM_getValue('showDebug') == false) {
+            GM_registerMenuCommand('显示Debug信息', function() {
+                GM_setValue('showDebug', true);
+                location.reload();
+            });
+        } else {
+            GM_registerMenuCommand('隐藏Debug信息', function() {
+                GM_setValue('showDebug', false);
+                location.reload();
+            });
+        }
+        GM_registerMenuCommand('==实验性设置==');
+        GM_registerMenuCommand('==OJ设置==');
+        if(GM_getValue('autoLogin') == false) {
+            GM_registerMenuCommand('开启自动登录', function() {
+                GM_setValue('autoLogin', true);
+                location.reload();
+            });
+        } else {
+            GM_registerMenuCommand('关闭自动登录', function() {
+                GM_setValue('autoLogin', false);
+                location.reload();
+            });
+        }
+    }
+
+    // 默认配置
+    function autoSettings(type) {
+        if(GM_getValue('showVersion') == undefined || type)
+            GM_setValue('showVersion', true);
+        if(GM_getValue('showDebug') == undefined || type)
+            GM_setValue('showDebug', false);
+        if(GM_getValue('showUpdMsg') == undefined || type)
+            GM_setValue('showUpdMsg', true);
+
+        if(GM_getValue('autoLogin') == undefined || type)
+            GM_setValue('autoLogin', true);
+
+    }
+
+
+    function runAll() {
+        showDebug('运行脚本');
+        $('#page_content').append('<gmojbetterold></gmojbetterold>'); // 添加标识
+        //changeLanguage();
+        //addLocker();
+        //openAllProblems();
+        //cph();
+        //copyFileio();
+        autoLogin();
+        //insertBox();
+        submitCode();
+        ForumToVditor();
+        downloadSRC();
+        updRating();
+        showRating();
+    }
+
+
+    window.boxHTML = null;
+    //checkUpdate();
+    checkUpdMsg();
+    autoSettings(false);
+    setMenuCommand();
+    showVersion();
+
+    // 检查页面更新
+    setInterval(function(){
+        if(!$('#page_content')[0].innerHTML.includes('<gmojbetterold></gmojbetterold>')) {
+            runAll();
+        }
+    }, 200);
+
+    // 自动刷新status等页面
+    // 2-15更新修复恢复bug
+    setInterval(function(){
+        if(location.href.includes('status')) {
+            $.ajax({
+                type: "GET",
+                url: hash_to_url(window.location.hash),
+                success: function(data){
+                    if(location.href.includes('status')){
+                        var res = $.parseHTML(data);
+                        $('table').html(res[1].getElementsByTagName('table')[0].innerHTML);
+                    }
+                },
+                error: function(xhr, statusText, error){
+                    $('#page_content').html('<div class="alert"><strong>Error: ' + ' ' + error + '</strong></div>');
+                }
+            });
+        }
+    }, 1000);
+
+    // 自动删除freopen
+    addEventListener("paste", (event) => {
+        setTimeout(function(){
+            if(location.hash.includes('customtest')) {
+                if ($('#toggle_editor').is(":checked")) { // 使用codemirror
+                    if(editor.getValue().includes('freopen') && !editor.getValue().includes('//freopen') && !editor.getValue().includes('//\tfreopen')) {
+                        var text = editor.getValue();
+                        editor.setValue(text.replaceAll('freopen', '//freopen'));
+                    }
+                } else {
+                    if($('#texteditor').val().includes('freopen') && !$('#texteditor').val().includes('//freopen') && !$('#texteditor').val().includes('//\tfreopen')) {
+                        var text = $('#texteditor').val();
+                        $('#texteditor').val(text.replaceAll('freopen', '//freopen'));
+                    }
+                }
+            }
+        }, 100);
+    });
+})();
