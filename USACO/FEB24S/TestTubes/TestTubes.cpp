@@ -9,10 +9,12 @@ ll ans[2*N][3], cnt;
 void mov(ll x, ll y) {
 	ans[++cnt][1] = x;
 	ans[cnt][2] = y;
-	if(s[x][k[x]] == s[y][k[y]]) k[x]--;
+	if(k[x] == 0) return (void)printf("wdf");
+	if(k[x] && k[y] && s[x][k[x]] == s[y][k[y]]) k[x]--;
 	else s[y][++k[y]] = s[x][k[x]--];
 }
 int main() {
+//	freopen("C:\\Users\\Administrator\\Downloads\\P10191_2.in", "r", stdin);
 	scanf("%lld", &t);
 	while(t--) {
 		scanf("%lld %lld %s %s", &n, &p, s[1]+1, s[2]+1);
@@ -22,15 +24,15 @@ int main() {
 			if(s[2][i] != s[2][i-1]) s[2][++k[2]] = s[2][i];
 		}
 		while(k[1] != 1 || k[2] != 1 || k[3] != 0) {
-			if(!k[1] && k[2] >= 2) {
+			if(!k[1] && k[2] == 2) {
 				mov(2, 1);
-			} else if(k[1] >= 2 && !k[2]) {
+			} else if(k[1] == 2 && !k[2]) {
 				mov(1, 2);
 			} else if(!k[1] && k[2] == 1) {
 				mov(3, 1);
 			} else if(k[1] == 1 && !k[2]) {
 				mov(3, 2);
-			} else if(k[1] == 1 && k[2] == 1 && k[3] == 1) {
+			} else if(k[1] == 1 && k[2] == 1 && s[1][k[1]] != s[2][k[2]]) {
 				if(s[1][k[1]] == s[3][k[3]]) {
 					mov(3, 1);
 				} else {
@@ -55,6 +57,7 @@ int main() {
 					mov(2, 3);
 				}
 			}
+//			if(t == 5) printf("%lld %lld %lld\n", k[1], k[2], k[3]);
 		}
 		printf("%lld\n", cnt);
 		if(p != 1) {
