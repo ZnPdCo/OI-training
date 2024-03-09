@@ -103,7 +103,7 @@ const updateMsg = {'2024-2-2': '1.增加更新公告（可在右上角设置手�
     }, 200);
 
     // 自动选择语言
-    registerModule('auto-lang', strModule, '["c++14", "c++11", "c++", "c", "pascal"]', '设置「提交语言优先级」', '提交代码界面选择语言优先级', function() {
+    registerModule('set-lang', strModule, '["c++14", "c++11", "c++", "c", "pascal"]', '设置「提交语言优先级」', '提交代码界面选择语言优先级', function() {
         var order = JSON.parse(GM_getValue('auto-lang'));
         for(var i = 0; i < order.length; i++) {
             var lang = order[i];
@@ -149,7 +149,7 @@ const updateMsg = {'2024-2-2': '1.增加更新公告（可在右上角设置手�
     });
 
     // 自动打开比赛所有试题
-    registerModule('open-problems', boolModule, true, '添加「打开比赛所有试题」按钮', null, function() {
+    registerModule('add-open-problems', boolModule, true, '添加「打开比赛所有试题」按钮', null, function() {
         var problems = $('#contest_problems a');
         if(problems.length) {
             $('.nav').eq(1).append('<li><a id="open_problems" style="cursor: pointer;" class="gmojbetter">打开所有题目</a></li>');
@@ -162,7 +162,7 @@ const updateMsg = {'2024-2-2': '1.增加更新公告（可在右上角设置手�
     });
 
     // 复制文操
-    registerModule('copy-fileio', boolModule, true, '添加「复制文件操作」按钮', null, function() {
+    registerModule('add-copy-fileio', boolModule, true, '添加「复制文件操作」按钮', null, function() {
         var fileio = $('.row-fluid [style*="color: red; font-weight: bold;"]');
         if(fileio.eq(0).text().includes('.in')) {
             $('#problem_judge_details').eq(0).append('<a id="fileio" class="gmojbetter icon-file" title="复制文件操作"></a>');
@@ -171,12 +171,12 @@ const updateMsg = {'2024-2-2': '1.增加更新公告（可在右上角设置手�
                 setTimeout(function() {
                     $('#fileio')[0].className = 'gmojbetter icon-file';
                 }, 1000);
-                var code = GM_getValue('fileio-code').replaceAll('{cr}', '\n').replaceAll('{tab}', '\t').replaceAll('{input}', fileio.eq(0).text()).replaceAll('{output}', fileio.eq(1).text());
+                var code = GM_getValue('set-copy-fileio').replaceAll('{cr}', '\n').replaceAll('{tab}', '\t').replaceAll('{input}', fileio.eq(0).text()).replaceAll('{output}', fileio.eq(1).text());
                 GM_setClipboard(code);
             });
         }
     });
-    registerModule('fileio-code', strModule, 'freopen("{input}", "r", stdin);{cr}{tab}freopen("{output}", "w", stdout);', '设置「复制文件操作」代码', '文件操作代码？（‘{input}’为输入文件名（含后缀），‘{output}’为输出文件名（含后缀），‘{cr}’为换行，‘{tab}’为tab）', function() {});
+    registerModule('set-copy-fileio', strModule, 'freopen("{input}", "r", stdin);{cr}{tab}freopen("{output}", "w", stdout);', '设置「复制文件操作」代码', '文件操作代码？（‘{input}’为输入文件名（含后缀），‘{output}’为输出文件名（含后缀），‘{cr}’为换行，‘{tab}’为tab）', function() {});
 
     // 传送cph
     registerModule('add-cph', boolModule, true, '添加「cph传送」按钮', null, function() {
@@ -235,7 +235,7 @@ const updateMsg = {'2024-2-2': '1.增加更新公告（可在右上角设置手�
                 });
 
                 // 用户自定义端口
-                if(GM_getValue('cph-post') != undefined && GM_getValue('cph-post') != 27121 && GM_getValue('cph-post') != 10045) {
+                if(GM_getValue('set-cph') != undefined && GM_getValue('set-cph') != 27121 && GM_getValue('set-cph') != 10045) {
                     await postCph(GM_getValue('cph-post'), data);
                     if(!window.cphError) {
                         $('#cph').toggleClass('icon-ok');
@@ -272,7 +272,7 @@ const updateMsg = {'2024-2-2': '1.增加更新公告（可在右上角设置手�
             });
         }
     });
-    registerModule('cph-post', strModule, '27121', '设置「cph传送」', 'cph端口号（默认为27121、10045，一般无需设置）', function() {});
+    registerModule('set-cph', strModule, '27121', '设置「cph传送」', 'cph端口号（默认为27121、10045，一般无需设置）', function() {});
 
 
 
@@ -294,7 +294,7 @@ const updateMsg = {'2024-2-2': '1.增加更新公告（可在右上角设置手�
     }
 
     // 检查更新
-    registerModule('check-update', boolModule, true, '开启「自动检查更新」', null, async function() {
+    registerModule('open-check-update', boolModule, true, '开启「自动检查更新」', null, async function() {
         const updateUrl = "https://update.greasyfork.org/scripts/484886/GMOJ%20Better.user.js";
         GM_xmlhttpRequest({
             method: "GET",
@@ -309,7 +309,7 @@ const updateMsg = {'2024-2-2': '1.增加更新公告（可在右上角设置手�
     });
 
     // 在首页插入box
-    registerModule('insert-box', boolModule, true, '添加「首页倒计时」', null, async function() {
+    registerModule('add-countdown', boolModule, true, '添加「首页倒计时」', null, async function() {
         if(window.boxHTML != null) {
             if($('.hero-unit').length) {
                 $(window.boxHTML).insertAfter('.thumbnail.span3');
@@ -336,8 +336,7 @@ const updateMsg = {'2024-2-2': '1.增加更新公告（可在右上角设置手�
         });
     });
     // 自动登录
-    function autoLogin() {
-        if(GM_getValue('autoLogin') != true) return;
+    registerModule('open-auto-login', boolModule, true, '开启「自动登录」', null, async function() {
         if($('[name="username"]').length && $('[name="password"]').length && $('.btn.btn-primary.pull-right').length) {
             if(GM_getValue('password') == undefined) {
                 $('.btn.btn-primary.pull-right').click(function() {
@@ -367,67 +366,13 @@ const updateMsg = {'2024-2-2': '1.增加更新公告（可在右上角设置手�
                 GM_deleteValue('password');
             });
         }
-    }
-    function queryParam(key) {
-        const url = new URL(location.href.replaceAll('#', ''));
-        var reg = new RegExp('[\?\&]' + key + '=([^\&]*)(\&?)', 'i');
-        var r = url.search.match(reg);
-        return r ? r[1] : '';
-    }
+    });
 
-    // 提交代码相关
-    async function submitCode() {
-        if($('#problem_judge_details').length) {
-            /*$(`<button class="btn btn-primary" onclick="
-            if (typeof(window.fileHandles)=='undefined') window.fileHandles={};
-            async function autoSubmit() {
-                if($('#pid').val() in window.fileHandles) {
-                    var fileHandle = window.fileHandles[$('#pid').val()];
-                } else {
-                    var [fileHandle] = await window.showOpenFilePicker();
-                    window.fileHandles[$('#pid').val()] = fileHandle;
-                }
-                const file = await fileHandle.getFile();
-                text = await file.text();
-                localStorage.setItem('gmcode', text);
-                load_page('main/submit/4430?code=local');
-            }
-            autoSubmit();" style="margin-left: 10px;" title="从本地选择文件读取提交，若不刷新会自动读取并更新">Auto Submit</button>`).insertAfter('.btn.btn-primary:contains(Submit)');
-            */
-        }
+
+    // 自动提交代码
+    registerModule('open-auto-submit', boolModule, false, '开启「自动在代码提交框粘贴代码」', null, async function() {
         if(location.hash.includes('#main/submit')) {
-            /*$(`<a onclick="const a = document.createElement('a');
-a.setAttribute('href', 'data:text/application/x-zip-compressed;base64,UEsDBBQAAAAIACOdUViYnY5kvQMAAGEHAAAHAAAAZ21idC5weZ1V328bRRB+t+T/YeU83J04znWSB7DqgoQoqoQA0eQpsk6XeM/e5n6xu64TIaSoapoUEhxoaNoSAVVTsJBqUwEhjhPln/Ge7Sf+BWbP58SnuCqqddJ5d2dnvvlmvjlOV/PpFIKfTX0X2Y7FlhFxA59ydF0udETxF1XMOEJTSLROxPrzaF8cPxDfb8VnotXuv3w69BNfZqssseYViq0S8crJXeLixMYt5nuJDT/phpGyZzmJrRpeXKR+jWGaTuGVJRxw9GH0Ir6HLIZwfqJDnxmAkWNXzQQkQMRj3HKcmIFztGPeM1o6lU5NofDZWvjzc/Hdabdz0H+6Jep3wh/+gGewUU+niI0c7Kng2bBo+baGPJ+Db7Qwo6PZYowkoMTjamaeWWWcR8EqrwBStkRJwI1gFV21iYPNwOKVa+gqeMldQwvwmi5mtOF96R2vEK7mYkj9VkfUH4YPN7qdQ3FvXTTb6VSN8ArygzEwC7mijjI0oyPsLfkyu4IyP3f97XcUTfJkx+g4XuGogGxDUqDGEcSvd8Kf9rtH2+LFI7HfGKxv906bw4D/nmyJzcdi80fROe4erXWPfh90HvWbB+M26VQJ21bV4eaS79mkHGUHQZQP8tmyu8gNWXflkhW8OPYkGqXCecDyWbD2bxke5lmGPeLT7JRrES/Lqosu4dkvv4JHiaogeYcSyziSK8aZOgGCFud8QdYEIyCt9jrSIgUZNUo4VicnkSjVODeXCzYZw+sLZ7nB5cJFdYklu9vbbaRTViDNoi3VND3LxaY5sm4+6bbvg1X3+Fux/udg78XwUu/JXbFxCk0elQixSpWX/JqncqJH/aKjgJRGZEpRG8zBOIBzbbzlpal2Lr9l4jgq3NNjVRs3b3x045O5BJT+P63e7ktxcLe3c2+E4H1IwKB+lWNVySo6cjEIqMQKC8pnn96cU4raECTxSnhFPQeFCheqNuaifyoHWWBeGKWjI1izgprTkeIvK7oECecAUdV0LQbODRgUlKvxkmJepV5EwhB396gzBAqTUtSfRc04YhkVoJNNU7asaSoxMkh1pyW+bgy10zs+6zW+AU3FRdiX+8BFuHc42PtL7CTK8gapXYHcZIGAvv+XIAy8X9rhdnPiwAvvPxAna+Hf9f5vm+JxQ7QP+82zwV4z3NoAzPOffzz0cWkqAg8zY8q5GLJGJADZyYbtU9fiF9NrGqaXomhvKe+BBnABjG9jqmivjjD7JhHOFzPFV4QCDZ/tAA8JTcmDqC2rnio/M4XpK7O5d+HGf1BLAQIfABQAAAAIACOdUViYnY5kvQMAAGEHAAAHACQAAAAAAAAAIAAAAAAAAABnbWJ0LnB5CgAgAAAAAAABABgA9H2cMZZh2gH0fZwxlmHaAQ7OGX6OYdoBUEsFBgAAAAABAAEAWQAAAOIDAAAAAA==');
-a.setAttribute('download', 'gmbt.zip');
-a.click();">下载gmbt客户端，本地提交代码</a>`).insertAfter('#hint-allow-submit');*/
-
-            var text = '';
-
-            var code = queryParam('code');
-
-            // 从地址栏读取代码
-            if(code == 'local') {
-                text = localStorage.getItem("gmcode");
-            } else if(code == 'server') {
-                var post = 20419;  // 暂定gmbt客户端端口
-                await new Promise((resolve, reject) => {
-                    GM_xmlhttpRequest({
-                        url: `http://localhost:${post}/`,
-                        method: "POST",
-                        data: {},
-                        onload(f) {
-                            window.servercode = f.response;
-                            resolve(f.response);
-                        },
-                        onerror(e) {
-                            resolve(e);
-                        }
-                    })
-                });
-                text = window.servercode;
-            } else {
-                text = await navigator.clipboard.readText();
-            }
+            var text = await navigator.clipboard.readText();
 
             if(text.includes('//freopen') || text.includes('//\tfreopen') || text.includes('//  freopen')) {
                 var res = confirm("检测你在代码中注释了一处 freopen。\n是否解除该注释？");
@@ -445,16 +390,15 @@ a.click();">下载gmbt客户端，本地提交代码</a>`).insertAfter('#hint-al
                 $('.btn.btn-primary.pull-right').click();
             }
         }
-    }
+    });
 
     // 论坛页使用vditor（不稳定？）
-    function ForumToVditor() {
+    registerModule('open-vditor-for-forum', boolModule, true, '开启「论坛页vditor编辑器」', null, async function() {
         // 由于不知名bug，必须先打开一次编辑题目页才可以渲染
-        var Frame = document.createElement('iframe');
-        Frame.src='#admin/addproblem';
+        setTimeout(function () {
+            if($('#vditor-fixer').length == 0) $(`<iframe src = '#admin/addproblem' style='display:none;' id='vditor-fixer'></iframe>`).insertAfter('body');
+        });
         if(location.hash.includes('forum')) {
-
-
             $(`<div id='titleVditor'></div>`).insertBefore('#title');
             var titlev = new Vditor('titleVditor', {
                 cache: {
@@ -465,6 +409,7 @@ a.click();">下载gmbt客户端，本地提交代码</a>`).insertAfter('#hint-al
                     hide: true,
                 },
                 blur() {
+                    // 回车bug解决
                     $('#title').html(titlev.getHTML().replaceAll('</p>', '</p>gmojbetter123456')
                                      .replaceAll('</b>', '</b>gmojbetter123456')
                                      .replaceAll('</i>', '</i>gmojbetter123456')
@@ -488,6 +433,7 @@ a.click();">下载gmbt客户端，本地提交代码</a>`).insertAfter('#hint-al
                     className: 'right',
                     icon: '<svg><use xlink:href="#vditor-icon-upload"></use></svg>',
                     click () {
+                        // 上传图片base64
                         var fileselect = document.createElement('input');
                         fileselect.type = 'file';
                         fileselect.accept = "image/jpeg,image/png,image/jpg";
@@ -507,6 +453,7 @@ a.click();">下载gmbt客户端，本地提交代码</a>`).insertAfter('#hint-al
                     }
                 }, '|', 'undo', 'redo', '|', 'fullscreen', 'edit-mode'],
                 blur() {
+                    // 回车bug解决
                     $('#content').html(contentv.getHTML().replaceAll('</p>', '</p>gmojbetter123456')
                                        .replaceAll('</b>', '</b>gmojbetter123456')
                                        .replaceAll('</i>', '</i>gmojbetter123456')
@@ -587,222 +534,225 @@ a.click();">下载gmbt客户端，本地提交代码</a>`).insertAfter('#hint-al
             });
             $('#content').hide();
         }
-    }
+    });
 
-    // 更新rating数据（From P1000）
-    function updRating() {
-        function getSeed(rating, ratings) {
-            var seed = 1;
-            for(const [key, value] of Object.entries(ratings)){
-                seed += 1.0/(1+Math.pow(10, (rating-key)/400.0)) * value;
+    registerModule('show-rating', boolModule, true, '开启「Rating计算与显示」', null, function() {
+        // 更新rating数据（From P1000）
+        // cf算法
+        function updRating() {
+            function getSeed(rating, ratings) {
+                var seed = 1;
+                for(const [key, value] of Object.entries(ratings)){
+                    seed += 1.0/(1+Math.pow(10, (rating-key)/400.0)) * value;
+                }
+                return seed;
             }
-            return seed;
-        }
-        if(location.hash.includes('#contest/standing/')){
-            id = parseInt(location.hash.replace('#contest/standing/', '').split('/')[0])
-            $.ajax({
-                type: "GET",
-                url: "https://gmoj.net/senior/index.php/main/userinfo",
-                async: false,
-                success: function(data) {
-                    var ele = $.parseHTML(data);
-                    window.username = ele[1].querySelector('.label').innerText;
-                },
-                error: function(xhr, statusText, error) {}
-            });
-            $.ajax({
-                type: "GET",
-                url: "https://gmoj.net/senior/index.php/main/problemset",
-                async: false,
-                success: function(data) {
-                    var ele = $.parseHTML(data);
-                    window.text = ele[9].querySelector('tr input').value;
-                },
-                error: function(xhr, statusText, error) {}
-            });
-            const tips = '该内容为 GMOJ Better 创建的临时储存，请勿修改或删除。';
+            if(location.hash.includes('#contest/standing/')){
+                var id = parseInt(location.hash.replace('#contest/standing/', '').split('/')[0])
+                $.ajax({
+                    type: "GET",
+                    url: "index.php/main/userinfo",
+                    async: false,
+                    success: function(data) {
+                        var ele = $.parseHTML(data);
+                        window.username = ele[1].querySelector('.label').innerText;
+                    },
+                    error: function(xhr, statusText, error) {}
+                });
+                $.ajax({
+                    type: "GET",
+                    url: "index.php/main/problemset",
+                    async: false,
+                    success: function(data) {
+                        var ele = $.parseHTML(data);
+                        window.text = ele[9].querySelector('tr input').value;
+                    },
+                    error: function(xhr, statusText, error) {}
+                });
+                const tips = '该内容为 GMOJ Better 创建的临时储存，请勿修改或删除。';
 
-            if(!text.includes(tips)) {
-                text = `{"1": [],"2":[],"3": ${id}}`;
-            } else {
-                text = text.replace(tips, '');
-            }
-            var obj = JSON.parse(text);
-            var rating = 0;
-            if(obj["1"].length) {
-                rating = obj["1"][obj["2"].length-1];
-                if(obj["3"]>=id) return;
-            }
-
-            if($(`tbody tr td .label.label-info:contains("${username}")`).length == 0) return;
-
-            var myrank = $(`tbody tr td .label.label-info:contains("${username}")`).parent().parent().prev().text();
-            var allrank = $('tbody tr td .label.label-info').length;
-
-
-            $.ajax({
-                type: "GET",
-                url: "https://gmoj.net/senior/index.php/contest/home/" + id,
-                async: false,
-                success: function(data) {
-                    var ele = $.parseHTML(data);
-                    window.isEnd = ele[2].querySelector('.label').innerText;
-                    window.contentname = ele[2].querySelector('h2').innerText;
-                },
-                error: function(xhr, statusText, error) {}
-            });
-            if(isEnd != 'Ended') return;
-            var ratings = {};
-            if(contentname.includes('省选')) {
-                ratings[800] = 0.4 * allrank;
-                ratings[1200] = 0.4 * allrank;
-                ratings[2400] = 0.19 * allrank;
-                ratings[3600] = 0.01 * allrank;
-            }
-            else if(contentname.includes('A')) {
-                ratings[600] = 0.2 * allrank;
-                ratings[800] = 0.3 * allrank;
-                ratings[1200] = 0.499 * allrank;
-                ratings[2400] = 0.001 * allrank;
-            }
-            else if(contentname.includes('B')) {
-                ratings[600] = 0.2 * allrank;
-                ratings[800] = 0.4 * allrank;
-                ratings[1200] = 0.4 * allrank;
-            }
-            else if(contentname.includes('C')) {
-                ratings[600] = 0.4 * allrank;
-                ratings[800] = 0.5 * allrank;
-                ratings[1200] = 0.1 * allrank;
-            }
-            else {
-                ratings[600] = 0.379 * allrank;
-                ratings[800] = 0.4 * allrank;
-                ratings[1200] = 0.2 * allrank;
-                ratings[2400] = 0.02 * allrank;
-                ratings[3600] = 0.001 * allrank;
-            }
-            showDebug(ratings);
-            var seed = getSeed(rating, ratings);
-            var l = 0, r = 3600, mid, m = rating;
-            while(l <= r) {
-                mid = (l+r)/2;
-                seed = getSeed(mid, ratings);
-                showDebug(`当你的rating为${mid}时，预测排名为${seed}`);
-                if(myrank<=seed) {
-                    l = mid + 1;
-                    m = mid;
+                if(!window.text.includes(tips)) {
+                    window.text = `{"1": [],"2":[],"3": ${id}}`;
                 } else {
-                    r = mid - 1;
+                    window.text = window.text.replace(tips, '');
                 }
-            }
-            showDebug(`你的rating为(${rating}+${mid})/2=${Math.round((rating+m)/2)}`);
-            rating = Math.round((rating+m)/2);
-            obj["1"].push(rating)
-            obj["2"].push(id)
-            while((tips+JSON.stringify(obj)).length > 250) {
-                obj["1"] = obj["1"].slice(1);
-                obj["2"] = obj["2"].slice(1);
-            }
-            obj["3"] = id;
-            $.post("index.php/main/upd_bookmark/1000", {
-                star: 'false',
-                note: tips+JSON.stringify(obj)
-            });
-        }
-    }
-    function showRating() {
-        $(`<a id="show_ratings" onclick="
-        function run() {
-        $.ajax({
-            type: 'GET',
-            url: 'https://gmoj.net/senior/index.php/main/userinfo',
-            async: false,
-            success: function(data) {
-                var ele = $.parseHTML(data);
-                window.username = ele[1].querySelector('.label').innerText;
-            },
-            error: function(xhr, statusText, error) {}
-        });
-        if(location.hash.includes('#users/'+encodeURIComponent(username))){
-            $('#show_ratings').hide();
-            $('<div id=\\'ratings\\' class=\\'gmojbetter\\'></div>').insertAfter('#user-header');
-            $.ajax({
-                type: 'GET',
-                url: 'https://gmoj.net/senior/index.php/main/problemset',
-                async: false,
-                success: function(data) {
-                    var ele = $.parseHTML(data);
-                    window.text = ele[9].querySelector('tr input').value;
-                },
-                error: function(xhr, statusText, error) {}
-            });
-            text = window.text;
-            const tips = '该内容为 GMOJ Better 创建的临时储存，请勿修改或删除。';
-
-
-            if(!text.includes(tips)) {
-                return;
-            } else {
-                text = text.replace(tips, '');
-            }
-            var obj = JSON.parse(text);
-            var title = {
-                text: 'Ratings'
-            };
-            var subtitle = {
-                text: 'Source: GMOJ Better'
-            };
-            var xAxis = {
-                title: {
-                    text: 'Contest ID'
-                },
-                categories: obj['2']
-            };
-            var yAxis = {
-                title: {
-                    text: 'Score'
-                },
-                plotLines: [{
-                    value: 0,
-                    width: 1,
-                    color: '#808080'
-                }]
-            };
-
-            var tooltip = {
-                valueSuffix: ''
-            }
-
-            var legend = {
-                layout: 'vertical',
-                align: 'right',
-                verticalAlign: 'middle',
-                borderWidth: 0
-            };
-            var series =  [
-                {
-                    name: window.username + ' 的 Ratings',
-                    data: obj['1']
+                var obj = JSON.parse(window.text);
+                var rating = 0;
+                if(obj["1"].length) {
+                    rating = obj["1"][obj["1"].length-1];
+                    if(obj["3"]>=id) return;
                 }
-            ];
 
-            var json = {};
+                if($(`tbody tr td .label.label-info:contains("${username}")`).length == 0) return;
 
-            json.title = title;
-            json.subtitle = subtitle;
-            json.xAxis = xAxis;
-            json.yAxis = yAxis;
-            json.tooltip = tooltip;
-            json.legend = legend;
-            json.series = series;
+                var myrank = $(`tbody tr td .label.label-info:contains("${username}")`).parent().parent().prev().text();
+                var allrank = $('tbody tr td .label.label-info').length;
 
-            $('#ratings').highcharts(json);
+                $.ajax({
+                    type: "GET",
+                    url: "index.php/contest/home/" + id,
+                    async: false,
+                    success: function(data) {
+                        var ele = $.parseHTML(data);
+                        window.isEnd = ele[2].querySelector('.label').innerText;
+                        window.contentname = ele[2].querySelector('h2').innerText;
+                    },
+                    error: function(xhr, statusText, error) {}
+                });
+                if(window.isEnd != 'Ended') return;
+                var ratings = {};
+                if(window.contentname.includes('省选')) {
+                    ratings[800] = 0.4 * allrank;
+                    ratings[1200] = 0.4 * allrank;
+                    ratings[2400] = 0.19 * allrank;
+                    ratings[3600] = 0.01 * allrank;
+                }
+                else if(window.contentname.includes('A')) {
+                    ratings[600] = 0.2 * allrank;
+                    ratings[800] = 0.3 * allrank;
+                    ratings[1200] = 0.499 * allrank;
+                    ratings[2400] = 0.001 * allrank;
+                }
+                else if(window.contentname.includes('B')) {
+                    ratings[600] = 0.2 * allrank;
+                    ratings[800] = 0.4 * allrank;
+                    ratings[1200] = 0.4 * allrank;
+                }
+                else if(window.contentname.includes('C')) {
+                    ratings[600] = 0.4 * allrank;
+                    ratings[800] = 0.5 * allrank;
+                    ratings[1200] = 0.1 * allrank;
+                }
+                else {
+                    ratings[600] = 0.379 * allrank;
+                    ratings[800] = 0.4 * allrank;
+                    ratings[1200] = 0.2 * allrank;
+                    ratings[2400] = 0.02 * allrank;
+                    ratings[3600] = 0.001 * allrank;
+                }
+                var seed = getSeed(rating, ratings);
+                var l = 0, r = 3600, mid, m = rating;
+                while(l <= r) {
+                    mid = (l+r)/2;
+                    seed = getSeed(mid, ratings);
+                    if(myrank<=seed) {
+                        l = mid + 1;
+                        m = mid;
+                    } else {
+                        r = mid - 1;
+                    }
+                }
+                rating = Math.round((rating+m)/2);
+                obj["1"].push(rating)
+                obj["2"].push(id)
+                while((tips+JSON.stringify(obj)).length > 250) {
+                    obj["1"] = obj["1"].slice(1);
+                    obj["2"] = obj["2"].slice(1);
+                }
+                obj["3"] = id;
+                $.post("index.php/main/upd_bookmark/1000", {
+                    star: 'false',
+                    note: tips+JSON.stringify(obj)
+                });
+            }
         }
+        function showRating() {
+            if(location.hash.includes('#users/')) {
+                if($('#show_ratings').length == 0)
+                    $(`<a id="show_ratings" onclick="
+                    function run() {
+                        $.ajax({
+                            type: 'GET',
+                            url: 'index.php/main/userinfo',
+                            async: false,
+                            success: function(data) {
+                                var ele = $.parseHTML(data);
+                                window.username = ele[1].querySelector('.label').innerText;
+                            },
+                            error: function(xhr, statusText, error) {}
+                        });
+                        if(location.hash.includes('#users/'+encodeURIComponent(window.username))){
+                            $('#show_ratings').hide();
+                            $('<div id=\\'ratings\\' class=\\'gmojbetter\\'></div>').insertAfter('#user-header');
+                            $.ajax({
+                                type: 'GET',
+                                url: 'index.php/main/problemset',
+                                async: false,
+                                success: function(data) {
+                                    var ele = $.parseHTML(data);
+                                    window.text = ele[9].querySelector('tr input').value;
+                                },
+                                error: function(xhr, statusText, error) {}
+                            });
+                            const tips = '该内容为 GMOJ Better 创建的临时储存，请勿修改或删除。';
+
+
+                            if(!window.text.includes(tips)) {
+                                return;
+                            } else {
+                                window.text = window.text.replace(tips, '');
+                            }
+                            var obj = JSON.parse(window.text);
+                            var title = {
+                                text: 'Ratings'
+                            };
+                            var subtitle = {
+                                text: 'Source: GMOJ Better'
+                            };
+                            var xAxis = {
+                                title: {
+                                    text: 'Contest ID'
+                                },
+                                categories: obj['2']
+                            };
+                            var yAxis = {
+                                title: {
+                                    text: 'Score'
+                                },
+                                plotLines: [{
+                                    value: 0,
+                                    width: 1,
+                                    color: '#808080'
+                                }]
+                            };
+
+                            var tooltip = {
+                                valueSuffix: ''
+                            }
+
+                            var legend = {
+                                layout: 'vertical',
+                                align: 'right',
+                                verticalAlign: 'middle',
+                                borderWidth: 0
+                            };
+                            var series =  [
+                                {
+                                    name: window.username + ' 的 Ratings',
+                                    data: obj['1']
+                                }
+                            ];
+
+                            var json = {};
+
+                            json.title = title;
+                            json.subtitle = subtitle;
+                            json.xAxis = xAxis;
+                            json.yAxis = yAxis;
+                            json.tooltip = tooltip;
+                            json.legend = legend;
+                            json.series = series;
+
+                            $('#ratings').highcharts(json);
+                        }
+                    }
+                    run();"></a>`).insertAfter('body');
+                $('#show_ratings').click();
+            }
         }
-        run();"></a>`).insertAfter('body');
-        $('#show_ratings').click()
-    }
+        updRating();
+        showRating();
+    });
 
     function checkUpdMsg() {
         if(GM_getValue('showUpdMsg') == false) return;
@@ -954,13 +904,13 @@ a.click();">下载gmbt客户端，本地提交代码</a>`).insertAfter('#hint-al
         //openAllProblems();
         //cph();
         //copyFileio();
-        autoLogin();
+        //autoLogin();
         //insertBox();
-        submitCode();
-        ForumToVditor();
+        //submitCode();
+        //ForumToVditor();
         downloadSRC();
-        updRating();
-        showRating();
+        //updRating();
+        //showRating();
     }
 
 
