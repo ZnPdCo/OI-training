@@ -91,4 +91,4 @@ int main() {
 	for(ll i = 0; i <= k; i++) {
 		printf("%lld\n", ans[i]);
 	}
-} 
+}
