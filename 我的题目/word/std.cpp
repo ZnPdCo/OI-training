@@ -1,5 +1,7 @@
 #include <cstdio>
 #include <cstring>
+#include <queue>
+#include <map>
 #include <algorithm>
 #include <vector>
 using namespace std;
@@ -7,27 +9,59 @@ using namespace std;
 #define N 110
 #define M 5
 #define P 998244353
-ll n, m, k, q;
+#define inf 1e9
+ll n, m, k, q, cnt;
 ll a[M], e[M];
 ll ans[N];
 ll nxt[M];
-ll f[2][600000];
-ll dp[2][M];
-ll inf, mx;
-inline ll zip() {
-	ll x = 0;
-	ll base = inf + 1;
-	for(ll i = 0; i < m; i++) {
-		x = x * base + dp[1][i];
+ll f[2][300000];
+ll son[300000][M];
+ll val[300000];
+map<vector<ll>, ll> mp;
+struct node {
+	ll x, fa, c;
+	vector<ll> nw;
+	node(ll x_, ll fa_, ll c_, vector<ll> nw_) {
+		x = x_, fa = fa_, c = c_, nw = nw_; 
 	}
-	return x;
-}
-inline void unzip(ll x) {
-	ll base = inf + 1;
-	for(ll i = m - 1; i >= 0; i--) {
-		dp[0][i] = x % base;
-		x /= base;
+};
+queue<node> que;
+ll tot;
+ll pre() {
+	vector<ll> nw;
+	nw.push_back(0);
+	for(ll i = 1; i < m; i ++) nw.push_back(inf);
+	que.push(node(1, 0, 0, nw));
+	while(!que.empty()) {
+		ll x = que.front().x;
+		ll fa = que.front().fa;
+		ll c = que.front().c;
+		vector<ll> nw = que.front().nw;
+		que.pop();
+		
+		if(mp.find(nw) != mp.end()) son[fa][c] = mp[nw];
+		else if(x > n) son[fa][c] = 0;
+		else {
+			mp[nw] = ++ tot;
+			ll ID = tot;
+			val[tot] = inf;
+			for(ll i = 0; i < m; i++) val[tot] = min(val[tot], nw[i]);
+			
+			for(ll c = 0; c <= cnt; c ++) {
+				vector<ll> temp;
+				for(ll j = 0; j < m; j ++) temp.push_back(inf);
+				for(ll j = 0; j < m; j ++) {
+					ll u = j;
+					while(u && c != a[u + 1]) u = nxt[u];
+					if(c == a[u + 1]) u ++;
+					if(u < m) temp[u] = min(temp[u], nw[j]);
+					temp[j] = min(temp[j], nw[j] + 1);
+				}
+				que.push(node(x + 1, ID, c, temp));
+			}
+		}
 	}
+	return 1;
 }
 int main() {
 	scanf("%lld %lld %lld", &n, &m, &k);
@@ -37,8 +71,9 @@ int main() {
 		e[i] = a[i];
 	}
 	sort(e + 1, e + 1 + m);
+	cnt = unique(e + 1, e + 1 + m) - e - 1;
 	for(ll i = 1; i <= m; i++) {
-		a[i] = lower_bound(e + 1, e + 1 + m, a[i]) - e;
+		a[i] = lower_bound(e + 1, e + 1 + cnt, a[i]) - e;
 	}
 	
 	for(ll i = 2, j = 0; i <= m; i ++) {
@@ -46,46 +81,30 @@ int main() {
 		if(a[i] == a[j + 1]) j++;
 		nxt[i] = j;
 	}
-	
-	inf = n / m + 1;
-	for(ll i = 0; i < m; i ++) dp[1][i] = inf;	// 获取mx状态
-	mx = zip();
-	
-	dp[1][0] = 0;	// 获取初始状态
-	f[0][zip()] = 1;
+	f[0][pre()] = 1;
+	ll p = son[1][1];
+	p = son[p][2];
+	p = son[p][1];
+	p = son[p][2];
+	p = son[p][1];
+	p = son[p][2];
+	p = son[p][1];
+	p = son[p][2];
+	p = son[p][1];
+	printf("%lld\n", val[p]);/*
 	
 	for(ll i = 1; i <= n; i ++) {
 		memset(f[i % 2], 0, sizeof f[i % 2]);
-		for(ll s = 0; s <= mx; s ++) {
-			if(!f[(i - 1) % 2][s]) continue;
-			unzip(s);
-			for(ll c = 0; c <= m; c ++) {
-				for(ll j = 0; j < m; j ++) {
-					dp[1][j] = inf;
-				}
-				for(ll j = 0; j < m; j ++) {
-					ll u = j;
-					while(u && c != a[u + 1]) u = nxt[u];
-					if(c == a[u + 1]) u ++;
-					if(u < m) dp[1][u] = min(dp[1][u], dp[0][j]);
-					dp[1][j] = min(dp[1][j], dp[0][j] + 1);
-				}
-				if(c == 0) (f[i % 2][zip()] += f[(i - 1) % 2][s] * (k - m) % P) %= P;
-				else (f[i % 2][zip()] += f[(i - 1) % 2][s]) %= P;
+		for(ll s = 1; s <= tot; s ++) {
+			for(ll c = 0; c <= cnt; c ++) {
+				if(c == 0) (f[i % 2][son[s][c]] += f[(i - 1) % 2][s] * (k - cnt) % P) %= P;
+				else (f[i % 2][son[s][c]] += f[(i - 1) % 2][s]) %= P;
 			}
 		}
 	}
 	
-	for(ll s = 0; s <= mx; s ++) {
-		if(!f[n % 2][s]) continue;
-		unzip(s);
-		
-		ll mn = inf;
-		for(ll j = 0; j < m; j++) {
-			mn = min(mn, dp[0][j]);
-		}
-		
-		(ans[mn] += f[n % 2][s]) %= P;
+	for(ll s = 1; s <= tot; s ++) {
+		(ans[val[s]] += f[n % 2][s]) %= P;
 	}
 	
 	for(ll i = 0; i <= n; i ++) {
@@ -97,5 +116,5 @@ int main() {
 		ll x;
 		scanf("%lld", &x);
 		printf("%lld\n", ans[x]);
-	}
+	}*/
 }
